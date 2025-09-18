@@ -2,16 +2,15 @@ body {
   font-family: system-ui, sans-serif;
   margin: 0;
   padding: 0;
-  background: #fafafa;
-  color: #222;
+  background: #181818;
+  color: #e0e0e0;
 }
 header, footer {
-  background: #eee;
-  padding: 1em;
-  text-align: center;
+  background: #222;
+  color: #e0e0e0;
 }
 nav a {
-  color: #007acc;
+  color: #7abfff;
   text-decoration: none;
   margin: 0 0.5em;
 }
@@ -19,8 +18,8 @@ main {
   max-width: 700px;
   margin: 2em auto;
   padding: 0 1em;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  background: #222;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
   border-radius: 6px;
 }
 article h2 {
@@ -32,26 +31,4 @@ ul {
 }
 li {
   margin: 1em 0;
-}
-
-
-/* Existing light mode styles remain as-is */
-
-/* Dark mode styles */
-@media (prefers-color-scheme: dark) {
-  body {
-    background: #181818;
-    color: #e0e0e0;
-  }
-  header, footer {
-    background: #222;
-    color: #e0e0e0;
-  }
-  nav a {
-    color: #7abfff;
-  }
-  main {
-    background: #222;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
-  }
 }
