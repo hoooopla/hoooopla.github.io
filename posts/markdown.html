@@ -1,0 +1,15 @@
+<!-- Load marked.js from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+<!-- Markdown input area -->
+<textarea id="md-input"># Hello Markdown!</textarea>
+
+<!-- Where the HTML will be rendered -->
+<div id="md-output"></div>
+
+<script>
+  // Convert Markdown to HTML and display
+  document.getElementById('md-output').innerHTML = marked.parse(
+    document.getElementById('md-input').value
+  );
+</script>
