@@ -57,6 +57,13 @@ $$
       }
       // Optional: Render on page load
       window.onload = renderMarkdown;
+      // Shortcut: Ctrl+Enter or Cmd+Enter in textarea
+      document.getElementById('md-input').addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+          e.preventDefault();
+          renderMarkdown();
+        }
+      });
     </script>
   </main>
   <footer>
