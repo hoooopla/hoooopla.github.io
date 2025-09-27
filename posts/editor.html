@@ -59,6 +59,12 @@
   </main>
   <footer>
     &copy; 2025 hoooopla
-  </footer>
+    <span id="last-updated"></span>
+    <script>
+      // Show last updated date/time in UTC
+      document.getElementById('last-updated').innerText = 
+        ' | Last updated: ' + new Date().toUTCString();
+    </script>
+</footer>
 </body>
 </html>
