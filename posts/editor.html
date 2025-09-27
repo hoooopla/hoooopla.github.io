@@ -43,6 +43,10 @@ $$
       </textarea>
       <br>
       <button onclick="renderMarkdown()">Render Markdown</button>
+      <label for="md-filename" style="margin-top:1em;">
+        Save as:&nbsp;
+        <input id="md-filename" type="text" value="markdown.md" style="width: 160px; padding:0.3em; border-radius:6px; border:1.2px solid #aaa;">
+      </label>
       <button onclick="downloadMarkdown()">Download Markdown</button>
       <div id="md-output" style="width: 60%; margin-top:1em; border:1px solid #ddd; padding:1em;"></div>
     <!-- </div> -->
@@ -69,12 +73,13 @@ $$
       // Download Markdown function
       function downloadMarkdown() {
         const text = document.getElementById('md-input').value;
+        const filename = document.getElementById('md-filename').value || "markdown.md";
         const blob = new Blob([text], { type: 'text/markdown' });
         const url = URL.createObjectURL(blob);
 
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'markdown.md';
+        a.download = filename;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
