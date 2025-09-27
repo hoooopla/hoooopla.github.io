@@ -133,35 +133,50 @@ Use the control below to load another post into this section.
       });
     }
 
-    // Load other post into the section
+    // // Load other post into the section
+    // function loadOtherPost() {
+    //   const selector = document.getElementById('post-selector');
+    //   const value = selector.value;
+    //   const loaded = document.getElementById('loaded-post');
+    //   // If loading a markdown file
+    //   if (value.endsWith('.md')) {
+    //     fetch(value)
+    //       .then(res => res.text())
+    //       .then(md => {
+    //         loaded.innerHTML = marked.parse(md);
+    //         if (window.MathJax) MathJax.typesetPromise();
+    //       })
+    //       .catch(() => loaded.innerHTML = "<span style='color:#f55'>Failed to load post.</span>");
+    //   } else {
+    //     // Otherwise, load HTML
+    //     fetch(value)
+    //       .then(res => res.text())
+    //       .then(html => {
+    //         // Extract main content if possible
+    //         const temp = document.createElement('div');
+    //         temp.innerHTML = html;
+    //         const main = temp.querySelector('main') || temp;
+    //         loaded.innerHTML = main.innerHTML;
+    //         if (window.MathJax) MathJax.typesetPromise();
+    //       })
+    //       .catch(() => loaded.innerHTML = "<span style='color:#f55'>Failed to load post.</span>");
+    //   }
+    // }
     function loadOtherPost() {
-      const selector = document.getElementById('post-selector');
-      const value = selector.value;
-      const loaded = document.getElementById('loaded-post');
-      // If loading a markdown file
-      if (value.endsWith('.md')) {
+        const selector = document.getElementById('post-selector');
+        const value = selector.value;
+        const loaded = document.getElementById('loaded-post');
         fetch(value)
-          .then(res => res.text())
-          .then(md => {
-            loaded.innerHTML = marked.parse(md);
-            if (window.MathJax) MathJax.typesetPromise();
-          })
-          .catch(() => loaded.innerHTML = "<span style='color:#f55'>Failed to load post.</span>");
-      } else {
-        // Otherwise, load HTML
-        fetch(value)
-          .then(res => res.text())
-          .then(html => {
-            // Extract main content if possible
+            .then(res => res.text())
+            .then(html => {
             const temp = document.createElement('div');
             temp.innerHTML = html;
-            const main = temp.querySelector('main') || temp;
-            loaded.innerHTML = main.innerHTML;
+            const main = temp.querySelector('main');
+            loaded.innerHTML = main ? main.innerHTML : "<span style='color:#f55'>Main section not found.</span>";
             if (window.MathJax) MathJax.typesetPromise();
-          })
-          .catch(() => loaded.innerHTML = "<span style='color:#f55'>Failed to load post.</span>");
-      }
-    }
+            })
+            .catch(() => loaded.innerHTML = "<span style='color:#f55'>Failed to load post.</span>");
+        }
 
     // Initial render
     window.onload = renderMarkdown;
