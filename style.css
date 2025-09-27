@@ -14,6 +14,17 @@ nav a {
   text-decoration: none;
   margin: 0 0.5em;
 }
+a {
+  color: #8be9fd; /* default link color */
+  text-decoration: underline;
+  transition: color 0.2s;
+}
+a:visited {
+  color: #bb86fc; /* color for visited link */
+}
+a:hover {
+  color: #50fa7b; /* color on hover */
+}
 main {
   max-width: 700px;
   margin: 2em auto;
