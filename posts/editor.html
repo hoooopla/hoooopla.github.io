@@ -19,8 +19,9 @@
   </header>
   <main>
     <section>
+      <div style="display: flex; gap: 2em;">
       <h2>Markdown Editor</h2>
-      <textarea id="md-input" style="width:100%;height:150px;font-size:18px;">
+      <textarea id="md-input" style="width:48%;height:150px;font-size:18px;">
 # Try Markdown here!
 
 Type Markdown and LaTeX math below, then click the button to render:
@@ -42,7 +43,8 @@ $$
       </textarea>
       <br>
       <button onclick="renderMarkdown()">Render Markdown</button>
-      <div id="md-output" style="margin-top:1em; border:1px solid #ddd; padding:1em;"></div>
+      <div id="md-output" style="width: 48%; margin-top:1em; border:1px solid #ddd; padding:1em;"></div>
+    </div>
     </section>
     <script>
       function renderMarkdown() {
