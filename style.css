@@ -25,11 +25,11 @@ main {
 article h2 {
   margin-top: 0;
 }
-textarea {
+/* textarea {
   background-color: #181818;
   color: #e0e0e0;
   border: 2px solid #4CAF50;
-}
+} */
 ul {
   list-style: none;
   padding: 0;
