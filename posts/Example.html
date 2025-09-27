@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>A Sample Math Post</title>
+  <link rel="stylesheet" href="../style.css">
+  <!-- marked.js for Markdown parsing -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- MathJax for LaTeX rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <style>
+    body { background: #181818; color: #ededed; font-family: 'Inter', Arial, sans-serif; }
+    .container { display: flex; max-width: 1200px; margin: auto; min-height: 90vh; }
+    .toc { width: 260px; background: #222; border-radius: 16px; margin: 2em 1em 2em 0; padding: 2em 1em; height: fit-content; box-shadow: 0 2px 16px #0007; position: sticky; top: 2em; }
+    .toc h2 { font-size: 1.3em; margin-bottom:1em;}
+    .toc ul { list-style: none; padding: 0; margin: 0; }
+    .toc ul li { margin: 0.5em 0; }
+    .toc a { color: #8be9fd; text-decoration: none; transition: color 0.2s; }
+    .toc a:visited { color: #bb86fc; }
+    .toc a:hover { color: #50fa7b; }
+    .content-area { flex: 1; background: #232323; border-radius: 18px; padding: 2.5em; margin: 2em 0; box-shadow: 0 2px 16px #0007; min-width: 0; }
+    .load-section { margin: 2em 0; padding: 1.2em; background: #333; border-radius: 12px; }
+    button { background: #49c76e; color: #181818; border: none; border-radius: 12px; padding: 0.85em 2.2em; font-size: 1.08em; font-weight: 600; cursor: pointer; margin-top: 1em; margin-bottom: 1em; box-shadow: 0 2px 8px #0002; transition: background 0.2s; }
+    button:hover { background: #38b55c; }
+    @media (max-width: 900px) {
+      .container { flex-direction: column; }
+      .toc { width: 100%; margin: 1em 0; }
+      .content-area { padding: 1em; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>A Sample Math Post</h1>
+    <nav>
+      <a href="../index.html">Home</a> |
+      <a href="../about.html">About</a> |
+      <a href="editor.html">Editor</a>
+    </nav>
+  </header>
+  <div class="container">
+    <nav class="toc" id="toc">
+      <h2>Table of Contents</h2>
+      <ul id="toc-list"></ul>
+    </nav>
+    <main class="content-area">
+      <div id="md-output"></div>
+      <div class="load-section">
+        <strong>Load another post here:</strong>
+        <select id="post-selector">
+          <option value="sample-markdown-post.md">A Sample Math Post in markdown</option>
+          <option value="editor.html">Editor</option>
+        </select>
+        <button onclick="loadOtherPost()">Load Post</button>
+        <div id="loaded-post" style="margin-top:1em;"></div>
+      </div>
+    </main>
+  </div>
+  <footer>
+    &copy; 2025 hoooopla | <a href="editor.html">Markdown Editor</a>
+  </footer>
+  <script>
+    // The Markdown content for this post (edit as you like!)
+    const markdownContent = `
+# Introduction
+
+Welcome to a sample math post!  
+This post demonstrates math rendering, collapsible sections, references, and dynamic content loading.
+
+## Math Section
+
+Inline math: \\( x^2 + y^2 = z^2 \\)
+
+Block math:
+$$
+f(x) = \\int_{a}^{b} x^2 dx
+$$
+
+## Collapsible Section 1
+
+<details>
+  <summary>Show Advanced Math</summary>
+  Euler's Identity:
+  $$
+  e^{i\\pi} + 1 = 0
+  $$
+</details>
+
+## Collapsible Section 2
+
+<details>
+  <summary>Show Derivation</summary>
+  Let's derive the quadratic formula:
+  $$
+  x = \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}
+  $$
+</details>
+
+## References to Other Posts
+
+- [A Sample Math Post in markdown](sample-markdown-post.md)
+- [Editor](editor.html)
+
+## Load Other Post
+
+Use the control below to load another post into this section.
+    `;
+
+    // Render Markdown
+    function renderMarkdown() {
+      const html = marked.parse(markdownContent);
+      document.getElementById('md-output').innerHTML = html;
+      if (window.MathJax) MathJax.typesetPromise();
+      buildTOC();
+    }
+
+    // Build Table of Contents from rendered markdown headings
+    function buildTOC() {
+      const output = document.getElementById('md-output');
+      const tocList = document.getElementById('toc-list');
+      tocList.innerHTML = '';
+      // Find headings h1, h2, h3
+      output.querySelectorAll('h1, h2, h3').forEach(function(heading) {
+        // Give headings id if they don't have one
+        if (!heading.id) {
+          heading.id = heading.textContent.trim().replace(/\s+/g, '-').replace(/[^\w\-]/g,'').toLowerCase();
+        }
+        const li = document.createElement('li');
+        li.style.marginLeft = (heading.tagName === 'H2' ? '1em' : heading.tagName === 'H3' ? '2em' : '0');
+        li.innerHTML = `<a href="#${heading.id}">${heading.textContent}</a>`;
+        tocList.appendChild(li);
+      });
+    }
+
+    // Load other post into the section
+    function loadOtherPost() {
+      const selector = document.getElementById('post-selector');
+      const value = selector.value;
+      const loaded = document.getElementById('loaded-post');
+      // If loading a markdown file
+      if (value.endsWith('.md')) {
+        fetch(value)
+          .then(res => res.text())
+          .then(md => {
+            loaded.innerHTML = marked.parse(md);
+            if (window.MathJax) MathJax.typesetPromise();
+          })
+          .catch(() => loaded.innerHTML = "<span style='color:#f55'>Failed to load post.</span>");
+      } else {
+        // Otherwise, load HTML
+        fetch(value)
+          .then(res => res.text())
+          .then(html => {
+            // Extract main content if possible
+            const temp = document.createElement('div');
+            temp.innerHTML = html;
+            const main = temp.querySelector('main') || temp;
+            loaded.innerHTML = main.innerHTML;
+            if (window.MathJax) MathJax.typesetPromise();
+          })
+          .catch(() => loaded.innerHTML = "<span style='color:#f55'>Failed to load post.</span>");
+      }
+    }
+
+    // Initial render
+    window.onload = renderMarkdown;
+  </script>
+</body>
+</html>
