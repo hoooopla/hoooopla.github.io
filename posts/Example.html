@@ -44,6 +44,14 @@
       <ul id="toc-list"></ul>
     </nav>
     <main class="content-area">
+    <details>
+  <summary>Click to expand</summary>
+  <p>This is the hidden content that will be shown when you expand the block.</p>
+  <ul>
+    <li>Point 1</li>
+    <li>Point 2</li>
+  </ul>
+</details>
       <div id="md-output"></div>
       <div class="load-section">
         <strong>Load another post here:</strong>
@@ -133,35 +141,7 @@ Use the control below to load another post into this section.
       });
     }
 
-    // // Load other post into the section
-    // function loadOtherPost() {
-    //   const selector = document.getElementById('post-selector');
-    //   const value = selector.value;
-    //   const loaded = document.getElementById('loaded-post');
-    //   // If loading a markdown file
-    //   if (value.endsWith('.md')) {
-    //     fetch(value)
-    //       .then(res => res.text())
-    //       .then(md => {
-    //         loaded.innerHTML = marked.parse(md);
-    //         if (window.MathJax) MathJax.typesetPromise();
-    //       })
-    //       .catch(() => loaded.innerHTML = "<span style='color:#f55'>Failed to load post.</span>");
-    //   } else {
-    //     // Otherwise, load HTML
-    //     fetch(value)
-    //       .then(res => res.text())
-    //       .then(html => {
-    //         // Extract main content if possible
-    //         const temp = document.createElement('div');
-    //         temp.innerHTML = html;
-    //         const main = temp.querySelector('main') || temp;
-    //         loaded.innerHTML = main.innerHTML;
-    //         if (window.MathJax) MathJax.typesetPromise();
-    //       })
-    //       .catch(() => loaded.innerHTML = "<span style='color:#f55'>Failed to load post.</span>");
-    //   }
-    // }
+    // Load other post into the section
     function loadOtherPost() {
         const selector = document.getElementById('post-selector');
         const value = selector.value;
