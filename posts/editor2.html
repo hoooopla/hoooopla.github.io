@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>hoooopla Blog</title>
-  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="style.css">
   <!-- MathJax for rendering LaTeX math -->
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   <!-- marked.js for Markdown parsing -->
@@ -13,36 +13,35 @@
   <header>
     <h1>hoooopla Blog</h1>
     <nav>
-      <a href="../index.html">Home</a> |
-      <a href="../about.html">About</a>
+      <a href="index.html">Home</a> |
+      <a href="about.html">About</a>
     </nav>
   </header>
   <main>
     <section>
       <h2>Markdown Editor</h2>
-      <textarea id="md-input" style="width:100%;height:150px;font-size:18px;">
-        # Try Markdown here!
+      <textarea id="md-input" style="width:100%;height:150px;">
+# Try Markdown here!
 
-        Type Markdown and LaTeX math below, then click the button to render:
+Type Markdown and LaTeX math below, then click the button to render:
 
-        Inline math: \( x^2 + y^2 = z^2 \)
+Inline math: \( x^2 + y^2 = z^2 \)
 
-        Block math:
-        $$
-        f(x) = \int_{a}^{b} x^2 \, dx
-        $$
+Block math:
+$$
+f(x) = \int_{a}^{b} x^2 \, dx
+$$
 
-        <details>
-          <summary>Collapsible Section</summary>
-          More math:
-          $$
-          e^{i\pi} + 1 = 0
-          $$
-        </details>
+<details>
+  <summary>Collapsible Section</summary>
+  More math:
+  $$
+  e^{i\pi} + 1 = 0
+  $$
+</details>
       </textarea>
       <br>
       <button onclick="renderMarkdown()">Render Markdown</button>
-      <!-- <div id="md-output" style="margin-top:1em; border:1px solid #ddd; padding:1em;"></div> -->
       <div id="md-output" style="margin-top:1em; border:1px solid #ddd; padding:1em;"></div>
     </section>
     <script>
@@ -60,8 +59,6 @@
   </main>
   <footer>
     &copy; 2025 hoooopla
-    <span id="last-updated"></span>
-    11:20
-</footer>
+  </footer>
 </body>
 </html>
