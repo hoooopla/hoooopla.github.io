@@ -1,22 +1,45 @@
-# Try Markdown here!
+# Full example
 
-Type Markdown and LaTeX math below, then click the button to render:
+Welcome to a sample math post!  
+This post demonstrates math rendering, collapsible sections, references, and dynamic content loading.
 
-Inline math: \( x^2 + y^2 = z^2 \)
+## Main theorem:
+>If $V,W$: finite-dimensional vector spaces, and $S:V \to W,T:W\to V$ are linear.
+
+>Then $I-TS$ is invertible on $V$ if and only if $I-ST$ is invertible on $W$.
+
+ABC   
 
 Block math:
 $$
-f(x) = \int_{a}^{b} x^2 \, dx 
-$$
-$$
-\lim_{\varepsilon\to 0}u\star\rho_\varepsilon(x) = u(x)
+f(x) = \int_{a}^{b} x^2 dx
 $$
 
+## Collapsible Section 1
+
 <details>
-  <summary>Collapsible Section</summary>
-  More math:
+  <summary>Show Advanced Math</summary>
+  Euler's Identity:
   $$
-  e^{i\pi} + 1 = 0
+  e^{i\\pi} + 1 = 0
   $$
 </details>
-      
+
+## Collapsible Section 2
+
+<details>
+  <summary>Show Derivation</summary>
+  Let's derive the quadratic formula:
+  $$
+  x = \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}
+  $$
+</details>
+
+## References to Other Posts
+
+- [A Sample Math Post in markdown](sample-markdown-post.md)
+- [Editor](editor.html)
+
+## Load Other Post
+
+Use the control below to load another post into this section.
