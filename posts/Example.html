@@ -4,8 +4,15 @@
   <meta charset="UTF-8">
   <title>A Sample Math Post</title>
   <link rel="stylesheet" href="../style.css">
-  <!-- marked.js for Markdown parsing -->
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- MathJax for rendering LaTeX math -->
+  <script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$']]
+    }
+  };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   <!-- MathJax for LaTeX rendering -->
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   <style>
@@ -63,14 +70,17 @@
   <script>
     // The Markdown content for this post (edit as you like!)
     const markdownContent = `
-# Introduction
+# Full example
 
 Welcome to a sample math post!  
 This post demonstrates math rendering, collapsible sections, references, and dynamic content loading.
 
-## Math Section
+> ## Main theorem($I-ST: invertible iff I-TS: invertible$)
+> If $V,W$ are finite-dimentional vector space, and $S:V \to W,T:W\to V$ are two linear map.
+> Then $I-TS$ is invertible on $V$ if and only if $I-ST$ is invertible on $W$.
 
-Inline math: \\( x^2 + y^2 = z^2 \\)
+
+
 
 Block math:
 $$
