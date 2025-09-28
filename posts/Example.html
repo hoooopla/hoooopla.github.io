@@ -119,10 +119,17 @@ Use the control below to load another post into this section.
 
     // Render Markdown
     function renderMarkdown() {
-      const html = marked.parse(markdownContent);
-      document.getElementById('md-output').innerHTML = html;
-      if (window.MathJax) MathJax.typesetPromise();
-      buildTOC();
+      const markdownFile = "blocks/test.md";
+      fetch(markdownFile)
+        .then(response => response.text())
+        .then(md => {
+          document.getElementById('md-output').innerHTML = marked.parse(md);
+          if (window.MathJax) MathJax.typesetPromise();
+        });
+      // const html = marked.parse(markdownContent);
+      // document.getElementById('md-output').innerHTML = html;
+      // if (window.MathJax) MathJax.typesetPromise();
+      // buildTOC();
     }
 
     // Build Table of Contents from rendered markdown headings
