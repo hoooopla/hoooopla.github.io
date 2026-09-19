@@ -1,35 +1,61 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Minimal Math Blog</title>
-  <link rel="stylesheet" href="style.css">
-  <link rel="icon" type="image/png" href="favicon.png">
-  <link rel=”apple-touch-icon” href=”apple-touch-icon.png”>
-  <!-- MathJax for LaTeX support -->
-  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Personal information, mathematical interests, notes, and work.">
+  <meta name="color-scheme" content="dark">
+  <meta property="og:title" content="About hoooopla">
+  <meta property="og:description" content="Personal information and mathematical interests.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://hoooopla.github.io/">
+  <title>About — hoooopla</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="style.css?v=6">
+  <script src="site-data.js?v=4" defer></script>
+  <script src="site.js?v=4" defer></script>
 </head>
-<body>
-  <header>
-    <h1>Minimal Math Blog</h1>
-    <nav>
-      <a href="index.html">Home</a> |
-      <a href="about.html">About</a> |
-      <a href="https://hoooopla.github.io/Online-Editor/">Editor</a>
+<body data-page="about">
+  <a class="skip-link" href="#content">Skip to content</a>
+  <header class="site-header">
+    <a class="site-mark" href="index.html" aria-label="Home"><span>H</span><small>Mathematics</small></a>
+    <nav class="site-nav" aria-label="Main navigation">
+      <a href="index.html" data-nav="about">About</a>
+      <div class="nav-dropdown">
+        <a href="files.html" data-nav="files">Files</a>
+        <div class="nav-submenu" aria-label="File categories">
+          <a href="category.html?category=works">Works</a>
+          <a href="category.html?category=notes">Notes</a>
+          <a href="category.html?category=resources">Resources</a>
+        </div>
+      </div>
+      <a href="blog.html" data-nav="blog">Blog</a>
+      <a class="external-link" href="https://hoooopla.github.io/Math-Note-Editor/">Editor <span aria-hidden="true">&#8599;</span></a>
     </nav>
   </header>
-  <main>
-    <h2>Recent Posts</h2>
-    <ul>
-      <li><a href="posts/first-post.html">A Sample Math Post</a></li>
-      <li><a href="posts/Example.html">Example</a></li>
-      <li><a href="posts/math-section.md">A Sample Math Post in markdown</a></li>
-      <li><a href="https://hoooopla.github.io/Online-Editor/">Editor</a></li>
-      <li><a href="posts/editor2.html">Editor2</a></li>
-    </ul>
+
+  <main id="content" class="page-shell">
+    <header class="page-heading home-heading">
+      <p class="coordinate">01 / About</p>
+      <h1 id="profile-name">Your name</h1>
+      <p class="page-lead" id="profile-headline">Mathematics, notes, and ongoing work.</p>
+    </header>
+    <div class="profile-layout">
+      <article class="prose-panel">
+        <h2>Profile</h2>
+        <div id="profile-bio"><p>Open <code>site-data.js</code> and replace the placeholder profile information with your own.</p></div>
+      </article>
+      <aside class="details-panel" aria-label="Profile details">
+        <div id="profile-location-wrap"><span class="detail-label">Based in</span><span id="profile-location">Your location</span></div>
+        <div id="profile-email-wrap"><span class="detail-label">Contact</span><a id="profile-email" href="mailto:your-email@example.com">your-email@example.com</a></div>
+        <div id="profile-links-wrap"><span class="detail-label">Links</span><div class="profile-links" id="profile-links"></div></div>
+      </aside>
+    </div>
   </main>
-  <footer>
-    &copy; 2025 hoooopla
+
+  <footer class="site-footer">
+    <span>© <span data-current-year></span> <span data-owner-name>hoooopla</span></span>
+    <span class="footer-note">Built as a quiet archive for mathematical work.</span>
   </footer>
 </body>
 </html>
