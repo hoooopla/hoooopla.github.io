@@ -13,7 +13,8 @@ window.SITE_DATA = {
       "Add another paragraph by placing another quoted sentence in this list."
     ],
     links: [
-      { label: "Math Note Editor", url: "https://hoooopla.github.io/Math-Note-Editor/" }
+      { label: "Math Note Editor", url: "https://hoooopla.github.io/Math-Note-Editor/" },
+      { label: "Block Converter", url: "https://github.com/hoooopla/Block-converter" }
     ]
   },
 
