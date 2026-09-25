@@ -14,7 +14,7 @@ window.SITE_DATA = {
     ],
     links: [
       { label: "Math Note Editor", url: "https://hoooopla.github.io/Math-Note-Editor/" },
-      { label: "Block Converter", url: "https://github.com/hoooopla/Block-converter" }
+      { label: "Block Converter", url: "https://hoooopla.github.io/Block-converter/" }
     ]
   },
 

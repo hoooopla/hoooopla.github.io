@@ -44,7 +44,7 @@
       link.href = item.url;
       link.textContent = item.label;
       link.target = "_blank";
-      link.rel = "noreferrer";
+      link.rel = "noopener noreferrer";
       return link;
     }));
   }
