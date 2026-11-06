@@ -52,7 +52,9 @@ const sanitize = html => sanitizeHtml(html, {
   transformTags: { img: (tag, attrs) => ({tagName:'img',attribs:{...attrs,src:assetUrl(attrs.src)}}) }
 });
 function assetUrl(src) {
-  if (!src || /^(https?:|data:|\/)/i.test(src)) return src || '';
+  if (!src) return '';
+  if (/^\/api\/assets\//.test(src)) src = src.slice('/api/'.length);
+  if (/^(https?:|data:|\/)/i.test(src)) return src;
   const cleaned = path.posix.normalize(decodeURI(src).replaceAll('\\','/'));
   if (!cleaned.startsWith('assets/') || cleaned.includes('..')) return '';
   if (!fs.existsSync(path.join(source, cleaned))) errors.push(`Missing asset: ${cleaned}`);
@@ -118,7 +120,7 @@ function render(note, stack=[note.label]) {
   md.renderer.rules.image=(tokens,i,options,env,self)=>{tokens[i].attrSet('src',assetUrl(tokens[i].attrGet('src')));return defaultImage(tokens,i,options,env,self);};
   // KaTeX output is trusted here; authored HTML is restricted before rendering.
   const html=md.render(note.body.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,''));
-  return sanitizeHtml(html, {allowedTags:[...sanitizeHtml.defaults.allowedTags,'img','span','math','annotation','semantics','mrow','mi','mn','mo','msup','msub','mfrac','mspace','mtext','mstyle','mtable','mtr','mtd','mover','munder','munderover','msqrt','mroot','mpadded','menclose','details','summary','section','div'],allowedAttributes:{'*':['class','id','aria-hidden','style','xmlns','encoding','mathvariant','display','stretchy','fence','separator','size','width','height','src','alt','href','title','open','role','data-mathml']},allowedSchemes:['http','https','mailto'],allowedStyles:{'*':{'*':[/^[\w\s#%.,()\-]+$/]}}});
+  return sanitizeHtml(html, {allowedTags:[...sanitizeHtml.defaults.allowedTags,'img','span','math','annotation','semantics','mrow','mi','mn','mo','msup','msub','mfrac','mspace','mtext','mstyle','mtable','mtr','mtd','mover','munder','munderover','msqrt','mroot','mpadded','menclose','details','summary','section','div'],allowedAttributes:{'*':['class','id','aria-hidden','style','xmlns','encoding','mathvariant','display','stretchy','fence','separator','size','width','height','src','alt','href','title','open','role','data-mathml']},allowedSchemes:['http','https','mailto'],allowedStyles:{'*':{'*':[/^[\w\s#%.,()\-]+$/]}},transformTags:{img:(tag,attrs)=>({tagName:'img',attribs:{...attrs,src:assetUrl(attrs.src)}})}});
 }
 function shell(title, contents, page='notes') {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>${escape(title)} — hoooopla</title><link rel="icon" href="../favicon.svg"><link rel="stylesheet" href="../style.css"><link rel="stylesheet" href="../notes.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.25/dist/katex.min.css"></head><body data-page="${page}"><a class="skip-link" href="#content">Skip to content</a><header class="site-header"><a class="site-mark" href="../index.html"><span>H</span><small>Mathematics</small></a><nav class="site-nav" aria-label="Main navigation"><a href="../index.html">About</a><a href="../files.html">Files</a><a href="index.html" aria-current="page">Notes</a><a href="../blog.html">Blog</a><a href="https://hoooopla.github.io/Math-Note-Editor/">Editor ↗</a></nav></header><main id="content">${contents}</main><footer class="site-footer"><span>© ${new Date().getFullYear()} hoooopla</span><span>Mathematical notes, connected by ideas.</span></footer></body></html>`;

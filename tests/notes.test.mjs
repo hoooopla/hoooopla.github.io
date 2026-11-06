@@ -29,3 +29,13 @@ test('strict build rejects duplicate labels and broken references',t=>{
   fs.writeFileSync(path.join(source,'two.md'),'---\nid: two\ntitle: Two\nlabel: same\n---\n');
   assert.throws(()=>build(source,path.join(dir,'out')));
 });
+test('renders Math Note Editor viewer workspace image fixture', t => {
+  const dir=make(); t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+  const source=path.resolve('tests/fixtures/editor-viewer');
+  const output=path.join(dir,'output');
+  build(source,output);
+  const page=fs.readFileSync(path.join(output,'viewer-image-test.html'),'utf8');
+  assert.equal((page.match(/src="assets\/test-image.svg"/g)||[]).length,2);
+  assert.doesNotMatch(page,/src="\/api\/assets/);
+  assert.ok(fs.existsSync(path.join(output,'assets','test-image.svg')));
+});
