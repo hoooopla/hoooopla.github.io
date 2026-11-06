@@ -39,3 +39,26 @@ test('renders Math Note Editor viewer workspace image fixture', t => {
   assert.doesNotMatch(page,/src="\/api\/assets/);
   assert.ok(fs.existsSync(path.join(output,'assets','test-image.svg')));
 });
+test('renders all eight notes created by Math Note Editor in a blank workspace', t => {
+  const dir=make(); t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+  // Copied from Math-Note-Editor server.ts INITIAL_BLOCKS at 6123c914.
+  // Only the random UUIDs were replaced with stable UUIDs.
+  const source=path.resolve('tests/fixtures/editor-starter');
+  const output=path.join(dir,'output');
+  const result=build(source,output);
+  assert.match(result,/Built 8 notes.*0 issue\(s\)/);
+  const pages=fs.readdirSync(output).filter(file=>file.endsWith('.html'));
+  assert.equal(pages.length,9);
+  const page=n=>fs.readFileSync(path.join(output,`00000000-0000-4000-8000-${String(n).padStart(12,'0')}.html`),'utf8');
+  const welcome=page(1), nested=page(3), math=page(5), aliases=page(6);
+  assert.match(welcome,/Welcome to <strong>Math Note Editor<\/strong>/);
+  assert.match(welcome,/note-embed/);
+  assert.match(welcome,/This text belongs to a separate note/);
+  assert.match(welcome,/href="00000000-0000-4000-8000-000000000005.html">Math<\/a>/);
+  assert.match(nested,/href="00000000-0000-4000-8000-000000000004.html">A child note<\/a>/);
+  assert.match(aliases,/href="00000000-0000-4000-8000-000000000005.html">these formulas<\/a>/);
+  assert.match(math,/class="katex/);
+  assert.match(math,/class="katex-display/);
+  assert.match(math,/Backlinks/);
+  assert.match(math,/Link and organize notes/);
+});

@@ -60,6 +60,21 @@ function assetUrl(src) {
   if (!fs.existsSync(path.join(source, cleaned))) errors.push(`Missing asset: ${cleaned}`);
   return cleaned.split('/').map(encodeURIComponent).join('/');
 }
+function separateDisplayMath(body) {
+  const lines=body.split('\n'), result=[];
+  let fence=null;
+  for (const line of lines) {
+    const marker=/^\s*(`{3,}|~{3,})/.exec(line);
+    if (marker) {
+      if (!fence) fence=marker[1];
+      else if (marker[1][0]===fence[0] && marker[1].length>=fence.length) fence=null;
+    }
+    if (!fence && /^\s*\\\[\s*$/.test(line) && result.at(-1)?.trim()) result.push('');
+    result.push(line);
+    if (!fence && /^\s*\\\]\s*$/.test(line)) result.push('');
+  }
+  return result.join('\n');
+}
 const refs = new Map(notes.map(n => [n.label, new Set()]));
 const outgoing = new Map(notes.map(n => [n.label, new Set()]));
 function reference(raw, note, stack, embedded = false) {
@@ -73,8 +88,9 @@ function reference(raw, note, stack, embedded = false) {
   if (!target) { errors.push(`${path.relative(source,note.file)}: missing reference ${targetLabel}`); return `<span class="broken-reference" title="Missing note">${escape(alias || label)}</span>`; }
   outgoing.get(note.label).add(target.label); refs.get(target.label).add(note.label);
   const link = `<a class="note-reference${standout?' standout':''}" href="${urlFor(target)}">${escape(alias || target.title)}</a>`;
-  if (!embedded || !open) return link;
-  if (stack.includes(target.label)) return `<div class="note-embed"><div class="embed-heading">${link} <span>↩ Cycle</span></div></div>`;
+  if (!open) return link;
+  if (stack.includes(target.label)) return embedded ? `<div class="note-embed"><div class="embed-heading">${link} <span>↩ Cycle</span></div></div>` : link;
+  if (!embedded) return `<details class="note-embed inline-embed" open><summary>${escape(alias || target.title)}</summary><div class="embed-content">${render(target,[...stack,target.label])}</div><a href="${urlFor(target)}">Open note ↗</a></details>`;
   return `<section class="note-embed"><div class="embed-heading"><span>Referenced note</span>${link}</div><div class="embed-content">${render(target,[...stack,target.label])}</div></section>`;
 }
 function render(note, stack=[note.label]) {
@@ -119,7 +135,7 @@ function render(note, stack=[note.label]) {
   const defaultImage=md.renderer.rules.image;
   md.renderer.rules.image=(tokens,i,options,env,self)=>{tokens[i].attrSet('src',assetUrl(tokens[i].attrGet('src')));return defaultImage(tokens,i,options,env,self);};
   // KaTeX output is trusted here; authored HTML is restricted before rendering.
-  const html=md.render(note.body.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,''));
+  const html=md.render(separateDisplayMath(note.body.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'')));
   return sanitizeHtml(html, {allowedTags:[...sanitizeHtml.defaults.allowedTags,'img','span','math','annotation','semantics','mrow','mi','mn','mo','msup','msub','mfrac','mspace','mtext','mstyle','mtable','mtr','mtd','mover','munder','munderover','msqrt','mroot','mpadded','menclose','details','summary','section','div'],allowedAttributes:{'*':['class','id','aria-hidden','style','xmlns','encoding','mathvariant','display','stretchy','fence','separator','size','width','height','src','alt','href','title','open','role','data-mathml']},allowedSchemes:['http','https','mailto'],allowedStyles:{'*':{'*':[/^[\w\s#%.,()\-]+$/]}},transformTags:{img:(tag,attrs)=>({tagName:'img',attribs:{...attrs,src:assetUrl(attrs.src)}})}});
 }
 function shell(title, contents, page='notes') {
