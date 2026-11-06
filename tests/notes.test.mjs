@@ -1,0 +1,31 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { execFileSync } from 'node:child_process';
+const root = path.resolve('scripts/build-notes.mjs');
+const make = () => fs.mkdtempSync(path.join(os.tmpdir(),'notes-site-'));
+const build = (source,output,strict=true) => execFileSync(process.execPath,[root],{env:{...process.env,NOTES_WORKSPACE:source,NOTES_OUTPUT:output,NOTES_STRICT:strict?'1':'0'},encoding:'utf8'});
+test('renders a workspace with math, references, embeds and assets', t => {
+  const dir=make(); t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+  const source=path.join(dir,'workspace'), output=path.join(dir,'output');
+  fs.mkdirSync(path.join(source,'assets'),{recursive:true}); fs.mkdirSync(path.join(source,'nested'));
+  fs.writeFileSync(path.join(source,'assets','graph.svg'),'<svg xmlns="http://www.w3.org/2000/svg"></svg>');
+  fs.writeFileSync(path.join(source,'root.md'),'---\nid: root\ntitle: Sequences\nlabel: analysis/sequences\n---\n## Definition\nLet $a_n$ converge.\n\\[\\lim_{n\\to\\infty}a_n=a\\]\n\n[[/convergence∨]]\n\n![Graph](assets/graph.svg)\n');
+  fs.writeFileSync(path.join(source,'nested','child.md'),'---\nid: child\ntitle: Convergence\nlabel: analysis/sequences/convergence\n---\nA sequence. [[analysis/sequences || Parent]]\n');
+  build(source,output);
+  const page=fs.readFileSync(path.join(output,'root.html'),'utf8');
+  assert.match(page,/Convergence/); assert.match(page,/note-embed/); assert.match(page,/href="child.html"/);
+  assert.match(page,/class="katex/); assert.match(page,/assets\/graph.svg/);
+  assert.match(fs.readFileSync(path.join(output,'child.html'),'utf8'),/Backlinks/);
+  assert.match(page,/cdn\.jsdelivr\.net\/npm\/katex/);
+  assert.ok(fs.existsSync(path.join(output,'assets','graph.svg')));
+});
+test('strict build rejects duplicate labels and broken references',t=>{
+  const dir=make();t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+  const source=path.join(dir,'source'); fs.mkdirSync(source);
+  fs.writeFileSync(path.join(source,'one.md'),'---\nid: one\ntitle: One\nlabel: same\n---\n[[missing]]');
+  fs.writeFileSync(path.join(source,'two.md'),'---\nid: two\ntitle: Two\nlabel: same\n---\n');
+  assert.throws(()=>build(source,path.join(dir,'out')));
+});

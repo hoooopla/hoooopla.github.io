@@ -69,3 +69,31 @@ The website creates the category cards and category pages automatically.
 ## Publish
 
 Push the changes to the repository's GitHub Pages publishing branch. For a user site named `hoooopla.github.io`, this is usually the `main` branch.
+
+## Publish Math Note Editor workspace notes
+
+Put the `.md` files you want public in `notes-workspace/`. Nested directories are fine; labels in YAML frontmatter, rather than filenames, determine their position in the notes. Put referenced images in `notes-workspace/assets/`, and optionally copy `setting/settings.json` for KaTeX macros. **Everything in this folder is public after you push it.**
+
+A note begins with:
+
+```md
+---
+id: stable-id
+title: A note title
+label: analysis/sequences
+---
+Content with $inline$ math, \[display math\], and [[other/label]].
+```
+
+Standalone `[[other/label∨]]` expands the other note in place. Relative `[[/child]]`, aliases `[[label || display text]]`, and `[[ @label ]]` (without the space) are supported. Nested notes and cyclic links have bounded rendering. Raw HTML is sanitized; local images must be under `assets/`.
+
+To preview locally:
+
+```sh
+npm ci
+npm test
+npm run build:notes
+python3 -m http.server 8000
+```
+
+Visit `http://localhost:8000/notes/`. The build reports broken references, duplicate labels, and missing assets. To make these errors fail the build, run `NOTES_STRICT=1 npm run build:notes`. Pushing to `main` triggers the GitHub Actions notes build, which commits generated `notes/` pages to the repository. GitHub Pages then serves them from the existing branch-based site.
