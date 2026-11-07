@@ -43,15 +43,28 @@ for (const file of paths.sort()) {
   notes.push(note); byLabel.set(note.label,note);
 }
 const macros = (() => {
-  try { const settings = JSON.parse(fs.readFileSync(path.join(source,'setting','settings.json'),'utf8')); return settings.macros && typeof settings.macros === 'object' ? settings.macros : {}; } catch { return {}; }
+  try {
+    const settings = JSON.parse(fs.readFileSync(path.join(source,'setting','settings.json'),'utf8'));
+    const custom = settings.macros && typeof settings.macros === 'object' ? settings.macros : {};
+    return settings.emptySetStyle === 'slanted' ? {...custom, '\\emptyset':'\\varnothing'} : custom;
+  } catch { return {}; }
 })();
 const math = (tex, display) => { try { return katex.renderToString(tex,{displayMode:display,throwOnError:false,trust:false,macros}); } catch { return `<code>${escape(tex)}</code>`; } };
-const sanitize = html => sanitizeHtml(html, {
-  allowedTags: [...sanitizeHtml.defaults.allowedTags, 'img', 'details', 'summary', 'span'],
-  allowedAttributes: { ...sanitizeHtml.defaults.allowedAttributes, a:['href','title'], img:['src','alt','width','height'], span:['class'], details:['open','class'], '*':['class','id'] },
-  allowedSchemes: ['http','https','mailto'],
-  transformTags: { img: (tag, attrs) => ({tagName:'img',attribs:{...attrs,src:assetUrl(attrs.src)}}) }
-});
+function renderTitle(value) {
+  const title=String(value); let html='',start=0;
+  const escapedAt=position=>{let n=0;while(title[position-n-1]==='\\')n++;return n%2===1;};
+  for(let i=0;i<title.length;i++) {
+    const delimiter=title[i]==='$'&&!escapedAt(i)?'$':title.startsWith('\\[',i)&&!escapedAt(i)?'\\[':null;
+    if(!delimiter) continue;
+    const close=delimiter==='$'?'$':'\\]'; let end=i+delimiter.length;
+    while((end=title.indexOf(close,end))>=0 && escapedAt(end)) end+=close.length;
+    if(end<0) continue;
+    const tex=title.slice(i+delimiter.length,end).trim(); if(!tex) continue;
+    html+=escape(title.slice(start,i).replace(/\\\$/g,'$'))+math(tex,false);
+    i=end+close.length-1;start=i+1;
+  }
+  return html+escape(title.slice(start).replace(/\\\$/g,'$'));
+}
 function assetUrl(src) {
   if (!src) return '';
   if (/^\/api\/assets\//.test(src)) src = src.slice('/api/'.length);
@@ -88,11 +101,12 @@ function reference(raw, note, stack, embedded = false) {
   const alias = parts.join(' || ').trim();
   if (!target) { errors.push(`${path.relative(source,note.file)}: missing reference ${targetLabel}`); return `<span class="broken-reference" title="Missing note">${escape(alias || label)}</span>`; }
   outgoing.get(note.label).add(target.label); refs.get(target.label).add(note.label);
-  const link = `<a class="note-reference${standout?' standout':''}" href="${urlFor(target)}">${escape(alias || target.title)}</a>`;
+  const title=alias || target.title;
+  const link = `<a class="note-reference${standout?' standout':''}" href="${urlFor(target)}">${renderTitle(title)}</a>`;
   if (!open) return link;
-  if (stack.includes(target.label)) return embedded ? `<div class="note-embed"><div class="embed-heading">${link} <span>↩ Cycle</span></div></div>` : link;
-  if (!embedded) return `<details class="note-embed inline-embed" open><summary>${escape(alias || target.title)}</summary><div class="embed-content">${render(target,[...stack,target.label])}</div><a href="${urlFor(target)}">Open note ↗</a></details>`;
-  return `<section class="note-embed"><div class="embed-heading"><span>Referenced note</span>${link}</div><div class="embed-content">${render(target,[...stack,target.label])}</div></section>`;
+  if (stack.includes(target.label)) return `${link}<span class="embed-cycle" title="Already shown above"> ↩</span>`;
+  const kind=standout?'standout-embed':embedded?'standalone-embed':'inline-embed';
+  return `<details class="note-embed ${kind}" open><summary data-outline-title="${escape(title)}">${renderTitle(title)}</summary><div class="embed-content">${render(target,[...stack,target.label])}</div><a class="embed-open" href="${urlFor(target)}">Open note ↗</a></details>`;
 }
 function render(note, stack=[note.label]) {
   const md = new MarkdownIt({html:true,linkify:true,typographer:false});
@@ -112,27 +126,49 @@ function render(note, stack=[note.label]) {
     if (state.src.slice(state.pos,state.pos+2)!=='[[' || state.pos>0 && state.src[state.pos-1]==='\\') return false;
     const end=state.src.indexOf(']]',state.pos+2);
     if (end<0 || state.src.slice(state.pos+2,end).includes('\n')) return false;
-    if (!silent) { const t=state.push('note_reference','',0); t.content=state.src.slice(state.pos+2,end); }
+    if (!silent) {
+      const t=state.push('note_reference','',0);t.content=state.src.slice(state.pos+2,end);
+      const from=state.src.lastIndexOf('\n',state.pos-1)+1;
+      const lineEnd=state.src.indexOf('\n',end+2);
+      t.meta={standalone:!state.src.slice(from,state.pos).trim() && !state.src.slice(end+2,lineEnd<0?state.src.length:lineEnd).trim()};
+    }
     state.pos=end+2; return true;
   });
-  md.renderer.rules.note_reference = (tokens,i) => trustedToken(reference(tokens[i].content,note,stack));
+  md.renderer.rules.note_reference = (tokens,i) => trustedToken(reference(tokens[i].content,note,stack,tokens[i].meta?.standalone));
+  // The editor treats isolated single underscores as underline, including _underline_.
+  md.inline.ruler.before('emphasis','editor_underline',(state,silent)=>{
+    const s=state.src,p=state.pos;
+    const word=c=>c!==undefined && /[\p{L}\p{N}]/u.test(c);
+    if(s[p]!=='_' || s[p-1]==='\\' || s[p-1]==='_' || s[p+1]==='_' || word(s[p-1]) || /\s/.test(s[p+1]||'')) return false;
+    let end=-1;
+    for(let i=p+1;i<s.length && s[i]!=='\n';i++) {
+      if(s[i]==='$' && s[i-1]!=='\\') {const close=s.indexOf('$',i+1);if(close>i){i=close;continue;}}
+      if(s.startsWith('\\[',i)) {const close=s.indexOf('\\]',i+2);if(close>i){i=close+1;continue;}}
+      if(s[i]==='_' && s[i-1]!=='\\' && s[i-1]!=='_' && s[i+1]!=='_' && !/\s/.test(s[i-1]) && !word(s[i+1])) {end=i;break;}
+    }
+    if(end<0) return false;
+    if(!silent) {const token=state.push('editor_underline','',0);token.content=s.slice(p+1,end);}
+    state.pos=end+1;return true;
+  });
+  md.renderer.rules.editor_underline=(tokens,i)=>`<span class="note-underline">${md.renderInline(tokens[i].content)}</span>`;
   md.inline.ruler.before('escape','inline_math',(state,silent) => {
     const s=state.src, p=state.pos;
-    const delim=s.startsWith('\\(',p)?'\\(':s[p]==='$'&&s[p+1]!=='$'?'$':null;
+    const delim=s.startsWith('\\[',p)?'\\[':s.startsWith('\\(',p)?'\\(':s[p]==='$'&&s[p+1]!=='$'?'$':null;
     if (!delim) return false;
-    const end=s.indexOf(delim==='\\('?'\\)':'$',p+delim.length);
+    const end=s.indexOf(delim==='\\['?'\\]':delim==='\\('?'\\)':'$',p+delim.length);
     if (end<0 || end===p+delim.length || s.slice(p+delim.length,end).includes('\n')) return false;
-    if (!silent) {const t=state.push('math_inline','',0);t.content=s.slice(p+delim.length,end);}
-    state.pos=end+(delim==='\\('?2:1);return true;
+    if (!silent) {const t=state.push(delim==='\\['?'math_inline_display':'math_inline','',0);t.content=s.slice(p+delim.length,end);}
+    state.pos=end+(delim==='$'?1:2);return true;
   });
   md.renderer.rules.math_inline=(tokens,i)=>mathToken(tokens[i].content,false);
+  md.renderer.rules.math_inline_display=(tokens,i)=>mathToken(tokens[i].content,true);
   md.block.ruler.before('fence','display_math',(state,start,end,silent)=>{
     const line=state.src.slice(state.bMarks[start]+state.tShift[start],state.eMarks[start]).trim();
-    const begin=line.startsWith('\\[')?'\\[':line.startsWith('$$')?'$$':null;
+    const begin=line==='\\['?'\\[':line.startsWith('$$')?'$$':null;
     if (!begin) return false;
     let close=start, content=line.slice(begin.length), stop=begin==='\\['?'\\]':'$$';
     while (!content.includes(stop) && ++close<end) content+='\n'+state.src.slice(state.bMarks[close],state.eMarks[close]);
-    const idx=content.indexOf(stop); if (idx<0) return false;
+    const idx=content.indexOf(stop); if (idx<0 || content.slice(idx+stop.length).trim()) return false;
     if (silent) return true;
     const t=state.push('math_display','',0);t.content=content.slice(0,idx);state.line=close+1;return true;
   });
@@ -147,7 +183,7 @@ function render(note, stack=[note.label]) {
 function shell(title, contents, page='notes') {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>${escape(title)} — hoooopla</title><link rel="icon" href="../favicon.svg"><link rel="stylesheet" href="../style.css"><link rel="stylesheet" href="../notes.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.25/dist/katex.min.css"></head><body data-page="${page}"><a class="skip-link" href="#content">Skip to content</a><header class="site-header"><a class="site-mark" href="../index.html"><span>H</span><small>Mathematics</small></a><nav class="site-nav" aria-label="Main navigation"><a href="../index.html">About</a><a href="../files.html">Files</a><a href="index.html" aria-current="page">Notes</a><a href="../blog.html">Blog</a><a href="https://hoooopla.github.io/Math-Note-Editor/">Editor ↗</a></nav></header><main id="content">${contents}</main><footer class="site-footer"><span>© ${new Date().getFullYear()} hoooopla</span><span>Mathematical notes, connected by ideas.</span></footer></body></html>`;
 }
-const outputIndex = `<div class="notes-heading"><p class="coordinate">03 / Knowledge base</p><h1>Notes</h1><p class="page-lead">A growing collection of mathematical ideas. Follow a reference to see how they connect.</p></div><div class="notes-search"><label for="note-search">Find a note</label><input id="note-search" type="search" placeholder="Search titles and labels…" autocomplete="off"></div><div class="notes-index" id="notes-index">${notes.length ? notes.sort((a,b)=>a.label.localeCompare(b.label)).map(n=>`<a class="note-index-item" href="${urlFor(n)}" data-search="${escape((n.title+' '+n.label).toLowerCase())}"><span class="note-label">${escape(n.label)}</span><strong>${escape(n.title)}</strong><span aria-hidden="true">↗</span></a>`).join('') : '<div class="empty-state"><p>No notes published yet. Add Markdown files to <code>notes-workspace/</code> and run the notes build.</p></div>'}</div><script src="../notes.js" defer></script>`;
+const outputIndex = `<div class="notes-heading"><p class="coordinate">03 / Knowledge base</p><h1>Notes</h1><p class="page-lead">A growing collection of mathematical ideas. Follow a reference to see how they connect.</p></div><div class="notes-search"><label for="note-search">Find a note</label><input id="note-search" type="search" placeholder="Search titles and labels…" autocomplete="off"></div><div class="notes-index" id="notes-index">${notes.length ? notes.sort((a,b)=>a.label.localeCompare(b.label)).map(n=>`<a class="note-index-item" href="${urlFor(n)}" data-search="${escape((n.title+' '+n.label).toLowerCase())}"><span class="note-label">${escape(n.label)}</span><strong>${renderTitle(n.title)}</strong><span aria-hidden="true">↗</span></a>`).join('') : '<div class="empty-state"><p>No notes published yet. Add Markdown files to <code>notes-workspace/</code> and run the notes build.</p></div>'}</div><script src="../notes.js" defer></script>`;
 fs.rmSync(output,{recursive:true,force:true});fs.mkdirSync(output,{recursive:true});
 const assetFolder=path.join(source,'assets');if(fs.existsSync(assetFolder))fs.cpSync(assetFolder,path.join(output,'assets'),{recursive:true});
 fs.writeFileSync(path.join(output,'index.html'),shell('Notes',outputIndex));
@@ -155,13 +191,16 @@ for(const note of notes) {
   const body=render(note);
   const ancestors=note.label.split('/').slice(0,-1).map((_,i)=>note.label.split('/').slice(0,i+1).join('/'));
   const tree=notes.filter(n=>n.label===note.label || n.label.startsWith(note.label+'/') || ancestors.includes(n.label));
-  const sidebar=tree.sort((a,b)=>a.label.localeCompare(b.label)).map(n=>`<a class="tree-link ${n.id===note.id?'selected':''}" style="--depth:${Math.max(0,n.label.split('/').length-1)}" href="${urlFor(n)}">${escape(n.title)}</a>`).join('');
-  const contents=`<div class="note-layout"><aside class="note-tree" aria-label="Nearby notes"><a class="back-link" href="index.html">← All notes</a><p class="side-label">Topic</p>${sidebar}</aside><article class="note-paper"><div class="note-kicker">${escape(note.label)}</div><h1>${escape(note.title)}</h1><div class="note-content">${body}</div></article><aside class="note-context"><p class="side-label">In this note</p><div class="note-toc"></div><p class="side-label">References</p><div class="note-outgoing"></div><p class="side-label">Backlinks</p><div class="note-backlinks"></div></aside></div><script src="../notes.js" defer></script>`;
+  const sidebar=tree.sort((a,b)=>a.label.localeCompare(b.label)).map(n=>`<a class="tree-link ${n.id===note.id?'selected':''}" style="--depth:${Math.max(0,n.label.split('/').length-1)}" href="${urlFor(n)}">${renderTitle(n.title)}</a>`).join('');
+  const hasTopic=tree.length>1;
+  const topic=hasTopic?`<aside class="note-tree" aria-label="Nearby notes"><a class="back-link" href="index.html">← All notes</a><p class="side-label">Topic</p>${sidebar}</aside>`:'';
+  const example=note.label.startsWith('showcase:')?'<p class="example-label">Example from Math Note Editor · Read-only</p>':'';
+  const contents=`<div class="note-layout${hasTopic?'':' reading-wide'}">${topic}<article class="note-paper">${hasTopic?'':'<a class="back-link" href="index.html">← All notes</a>'}<div class="note-kicker">${escape(note.label)}</div><h1>${renderTitle(note.title)}</h1>${example}<div class="note-content">${body}</div></article><aside class="note-context"><p class="side-label">In this note</p><div class="note-toc"></div><p class="side-label">References</p><div class="note-outgoing"></div><p class="side-label">Backlinks</p><div class="note-backlinks"></div></aside></div><script src="../notes.js" defer></script>`;
   fs.writeFileSync(path.join(output,urlFor(note)),shell(note.title,contents));
 }
 for(const note of notes) {
   const p=path.join(output,urlFor(note));let html=fs.readFileSync(p,'utf8');
-  const list=labels=>[...labels].sort().map(label=>`<a href="${urlFor(byLabel.get(label))}">${escape(byLabel.get(label).title)}</a>`).join('') || '<span class="side-empty">None yet</span>';
+  const list=labels=>[...labels].sort().map(label=>`<a href="${urlFor(byLabel.get(label))}">${renderTitle(byLabel.get(label).title)}</a>`).join('') || '<span class="side-empty">None yet</span>';
   html=html.replace('<div class="note-outgoing"></div>',`<div class="note-outgoing">${list(outgoing.get(note.label))}</div>`).replace('<div class="note-backlinks"></div>',`<div class="note-backlinks">${list(refs.get(note.label))}</div>`);
   fs.writeFileSync(p,html);
 }

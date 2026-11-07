@@ -85,7 +85,7 @@ label: analysis/sequences
 Content with $inline$ math, \[display math\], and [[other/label]].
 ```
 
-Standalone `[[other/label∨]]` expands the other note in place. Relative `[[/child]]`, aliases `[[label || display text]]`, and `[[ @label ]]` (without the space) are supported. Nested notes and cyclic links have bounded rendering. Raw HTML is sanitized; local images must be under `assets/`.
+Open `[[other/label∨]]` references expand the other note in place and can be collapsed by clicking their title. `[[ @label ]]` (without the space) uses a larger standout title; relative `[[/child]]` and aliases `[[label || display text]]` work too. Closed references navigate to their own note page. Note titles can contain `$math$`, and isolated `_underscores_` render as underlines, matching the editor. The reading outline includes headings and open embeds. Nested notes and cyclic links have bounded rendering. Raw HTML is sanitized; local images must be under `assets/`.
 
 To preview locally:
 
