@@ -13,11 +13,12 @@ test('renders a workspace with math, references, embeds and assets', t => {
   fs.mkdirSync(path.join(source,'assets'),{recursive:true}); fs.mkdirSync(path.join(source,'nested'));
   fs.writeFileSync(path.join(source,'assets','graph.svg'),'<svg xmlns="http://www.w3.org/2000/svg"></svg>');
   fs.writeFileSync(path.join(source,'root.md'),'---\nid: root\ntitle: Sequences\nlabel: analysis/sequences\n---\n## Definition\nLet $a_n$ converge.\n\\[\\lim_{n\\to\\infty}a_n=a\\]\n\n[[/convergence∨]]\n\n![Graph](assets/graph.svg)\n');
-  fs.writeFileSync(path.join(source,'nested','child.md'),'---\nid: child\ntitle: Convergence\nlabel: analysis/sequences/convergence\n---\nA sequence. [[analysis/sequences || Parent]]\n');
+  fs.writeFileSync(path.join(source,'nested','child.md'),'---\nid: child\ntitle: Convergence\nlabel: analysis/sequences/convergence\n---\nA sequence $z^2$. [[analysis/sequences || Parent]]\n');
   build(source,output);
   const page=fs.readFileSync(path.join(output,'root.html'),'utf8');
   assert.match(page,/Convergence/); assert.match(page,/note-embed/); assert.match(page,/href="child.html"/);
   assert.match(page,/class="katex/); assert.match(page,/assets\/graph.svg/);
+  assert.match(page,/style="top:-[\d.]+em/); // Superscripts in embedded math keep KaTeX positioning.
   assert.match(fs.readFileSync(path.join(output,'child.html'),'utf8'),/Backlinks/);
   assert.match(page,/cdn\.jsdelivr\.net\/npm\/katex/);
   assert.ok(fs.existsSync(path.join(output,'assets','graph.svg')));
@@ -59,6 +60,7 @@ test('renders all eight notes created by Math Note Editor in a blank workspace',
   assert.match(aliases,/href="00000000-0000-4000-8000-000000000005.html">these formulas<\/a>/);
   assert.match(math,/class="katex/);
   assert.match(math,/class="katex-display/);
+  assert.match(math,/style="top:-[\d.]+em/);
   assert.match(math,/Backlinks/);
   assert.match(math,/Link and organize notes/);
 });

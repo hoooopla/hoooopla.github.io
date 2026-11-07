@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import crypto from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import MarkdownIt from 'markdown-it';
@@ -95,6 +96,10 @@ function reference(raw, note, stack, embedded = false) {
 }
 function render(note, stack=[note.label]) {
   const md = new MarkdownIt({html:true,linkify:true,typographer:false});
+  const trustedTokens=[];
+  const tokenPrefix=`KATEX${crypto.randomUUID().replaceAll('-','')}TOKEN`;
+  const trustedToken=value=>{ const index=trustedTokens.push(value)-1; return `${tokenPrefix}${index}END`; };
+  const mathToken=(tex,display)=>trustedToken(math(tex,display));
   md.block.ruler.before('paragraph','block_reference',(state,start,end,silent) => {
     const line = state.src.slice(state.bMarks[start]+state.tShift[start],state.eMarks[start]).trim();
     const match = /^\[\[([^\]\n]+)\]\]$/.exec(line);
@@ -102,7 +107,7 @@ function render(note, stack=[note.label]) {
     if (silent) return true;
     const token=state.push('block_reference','',0); token.content=match[1]; state.line=start+1; return true;
   });
-  md.renderer.rules.block_reference = (tokens,i) => reference(tokens[i].content,note,stack,true);
+  md.renderer.rules.block_reference = (tokens,i) => trustedToken(reference(tokens[i].content,note,stack,true));
   md.inline.ruler.before('link','note_reference',(state,silent) => {
     if (state.src.slice(state.pos,state.pos+2)!=='[[' || state.pos>0 && state.src[state.pos-1]==='\\') return false;
     const end=state.src.indexOf(']]',state.pos+2);
@@ -110,7 +115,7 @@ function render(note, stack=[note.label]) {
     if (!silent) { const t=state.push('note_reference','',0); t.content=state.src.slice(state.pos+2,end); }
     state.pos=end+2; return true;
   });
-  md.renderer.rules.note_reference = (tokens,i) => reference(tokens[i].content,note,stack);
+  md.renderer.rules.note_reference = (tokens,i) => trustedToken(reference(tokens[i].content,note,stack));
   md.inline.ruler.before('escape','inline_math',(state,silent) => {
     const s=state.src, p=state.pos;
     const delim=s.startsWith('\\(',p)?'\\(':s[p]==='$'&&s[p+1]!=='$'?'$':null;
@@ -120,7 +125,7 @@ function render(note, stack=[note.label]) {
     if (!silent) {const t=state.push('math_inline','',0);t.content=s.slice(p+delim.length,end);}
     state.pos=end+(delim==='\\('?2:1);return true;
   });
-  md.renderer.rules.math_inline=(tokens,i)=>math(tokens[i].content,false);
+  md.renderer.rules.math_inline=(tokens,i)=>mathToken(tokens[i].content,false);
   md.block.ruler.before('fence','display_math',(state,start,end,silent)=>{
     const line=state.src.slice(state.bMarks[start]+state.tShift[start],state.eMarks[start]).trim();
     const begin=line.startsWith('\\[')?'\\[':line.startsWith('$$')?'$$':null;
@@ -131,12 +136,13 @@ function render(note, stack=[note.label]) {
     if (silent) return true;
     const t=state.push('math_display','',0);t.content=content.slice(0,idx);state.line=close+1;return true;
   });
-  md.renderer.rules.math_display=(tokens,i)=>math(tokens[i].content,true);
+  md.renderer.rules.math_display=(tokens,i)=>mathToken(tokens[i].content,true);
   const defaultImage=md.renderer.rules.image;
   md.renderer.rules.image=(tokens,i,options,env,self)=>{tokens[i].attrSet('src',assetUrl(tokens[i].attrGet('src')));return defaultImage(tokens,i,options,env,self);};
   // KaTeX output is trusted here; authored HTML is restricted before rendering.
   const html=md.render(separateDisplayMath(note.body.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'')));
-  return sanitizeHtml(html, {allowedTags:[...sanitizeHtml.defaults.allowedTags,'img','span','math','annotation','semantics','mrow','mi','mn','mo','msup','msub','mfrac','mspace','mtext','mstyle','mtable','mtr','mtd','mover','munder','munderover','msqrt','mroot','mpadded','menclose','details','summary','section','div'],allowedAttributes:{'*':['class','id','aria-hidden','style','xmlns','encoding','mathvariant','display','stretchy','fence','separator','size','width','height','src','alt','href','title','open','role','data-mathml']},allowedSchemes:['http','https','mailto'],allowedStyles:{'*':{'*':[/^[\w\s#%.,()\-]+$/]}},transformTags:{img:(tag,attrs)=>({tagName:'img',attribs:{...attrs,src:assetUrl(attrs.src)}})}});
+  const clean=sanitizeHtml(html, {allowedTags:[...sanitizeHtml.defaults.allowedTags,'img','span','details','summary','section','div'],allowedAttributes:{...sanitizeHtml.defaults.allowedAttributes,a:['href','title','class'],img:['src','alt','width','height'],span:['class'],details:['open','class'],section:['class'],div:['class']},allowedSchemes:['http','https','mailto'],transformTags:{img:(tag,attrs)=>({tagName:'img',attribs:{...attrs,src:assetUrl(attrs.src)}})}});
+  return clean.replace(new RegExp(`${tokenPrefix}(\\d+)END`,'g'),(_,index)=>trustedTokens[Number(index)] ?? '');
 }
 function shell(title, contents, page='notes') {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>${escape(title)} — hoooopla</title><link rel="icon" href="../favicon.svg"><link rel="stylesheet" href="../style.css"><link rel="stylesheet" href="../notes.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.25/dist/katex.min.css"></head><body data-page="${page}"><a class="skip-link" href="#content">Skip to content</a><header class="site-header"><a class="site-mark" href="../index.html"><span>H</span><small>Mathematics</small></a><nav class="site-nav" aria-label="Main navigation"><a href="../index.html">About</a><a href="../files.html">Files</a><a href="index.html" aria-current="page">Notes</a><a href="../blog.html">Blog</a><a href="https://hoooopla.github.io/Math-Note-Editor/">Editor ↗</a></nav></header><main id="content">${contents}</main><footer class="site-footer"><span>© ${new Date().getFullYear()} hoooopla</span><span>Mathematical notes, connected by ideas.</span></footer></body></html>`;
