@@ -91,7 +91,8 @@ function separateDisplayMath(body) {
 }
 const refs = new Map(notes.map(n => [n.label, new Set()]));
 const outgoing = new Map(notes.map(n => [n.label, new Set()]));
-function reference(raw, note, stack, embedded = false) {
+let embedSequence = 0;
+function reference(raw, note, stack) {
   let value = raw.trim();
   const standout = value.startsWith('@'); if (standout) value = value.slice(1);
   const open = value.endsWith('∨'); if (open) value = value.slice(0,-1).trimEnd();
@@ -99,14 +100,18 @@ function reference(raw, note, stack, embedded = false) {
   const targetLabel = (label.startsWith('/') ? note.label + label : label).normalize('NFC');
   const target = byLabel.get(targetLabel);
   const alias = parts.join(' || ').trim();
-  if (!target) { errors.push(`${path.relative(source,note.file)}: missing reference ${targetLabel}`); return `<span class="broken-reference" title="Missing note">${escape(alias || label)}</span>`; }
+  if (!target) { errors.push(`${path.relative(source,note.file)}: missing reference ${targetLabel}`); return {title:`<span class="broken-reference" title="Missing note">${escape(alias || label)}</span>`,body:''}; }
   outgoing.get(note.label).add(target.label); refs.get(target.label).add(note.label);
   const title=alias || target.title;
-  const link = `<a class="note-reference${standout?' standout':''}" href="${urlFor(target)}">${renderTitle(title)}</a>`;
-  if (!open) return link;
-  if (stack.includes(target.label)) return `${link}<span class="embed-cycle" title="Already shown above"> ↩</span>`;
-  const kind=standout?'standout-embed':embedded?'standalone-embed':'inline-embed';
-  return `<details class="note-embed ${kind}" open><summary data-outline-title="${escape(title)}">${renderTitle(title)}</summary><div class="embed-content">${render(target,[...stack,target.label])}</div><a class="embed-open" href="${urlFor(target)}">Open note ↗</a></details>`;
+  const displayTitle=standout ? title.replace(/^\p{Ll}/u, letter=>letter.toUpperCase()) : title;
+  const link = `<a class="note-reference${standout?' standout':''}" href="${urlFor(target)}">${renderTitle(displayTitle)}</a>`;
+  if (!open) return {title:link,body:''};
+  if (stack.includes(target.label)) return {title:`${link}<span class="embed-cycle" title="Circular embed: already shown above"> ↩</span>`,body:''};
+  const kind=standout?'standout-embed':'inline-embed';
+  const id=`embed-body-${++embedSequence}`;
+  const button=`<button type="button" class="embed-title ${kind}" aria-expanded="true" aria-controls="${id}" data-outline-title="${escape(displayTitle)}">${renderTitle(displayTitle)}</button>`;
+  const body=`<div class="note-embed ${kind}" id="${id}"><div class="embed-content">${render(target,[...stack,target.label])}</div><a class="embed-open" href="${urlFor(target)}" aria-label="Open ${escape(target.title)} as a note">Open note ↗</a></div>`;
+  return {title:standout?`<div class="standout-title-row">${button}</div>`:button,body,standout};
 }
 function render(note, stack=[note.label]) {
   const md = new MarkdownIt({html:true,linkify:true,typographer:false});
@@ -121,7 +126,7 @@ function render(note, stack=[note.label]) {
     if (silent) return true;
     const token=state.push('block_reference','',0); token.content=match[1]; state.line=start+1; return true;
   });
-  md.renderer.rules.block_reference = (tokens,i) => trustedToken(reference(tokens[i].content,note,stack,true));
+  md.renderer.rules.block_reference = (tokens,i) => {const parts=reference(tokens[i].content,note,stack);return trustedToken(parts.title+parts.body);};
   md.inline.ruler.before('link','note_reference',(state,silent) => {
     if (state.src.slice(state.pos,state.pos+2)!=='[[' || state.pos>0 && state.src[state.pos-1]==='\\') return false;
     const end=state.src.indexOf(']]',state.pos+2);
@@ -134,7 +139,22 @@ function render(note, stack=[note.label]) {
     }
     state.pos=end+2; return true;
   });
-  md.renderer.rules.note_reference = (tokens,i) => trustedToken(reference(tokens[i].content,note,stack,tokens[i].meta?.standalone));
+  md.renderer.rules.note_reference = (tokens,i) => {const parts=reference(tokens[i].content,note,stack);return trustedToken(parts.title+parts.body);};
+  // The title stays in its sentence; the body occupies the next visual row.
+  // Splitting here also keeps block content out of a paragraph's HTML DOM.
+  md.renderer.rules.note_paragraph = (tokens,i,options,env) => {
+    const {children,wrapped}=tokens[i].meta;
+    let html='';
+    for (const child of children) {
+      if (child.type!=='note_reference') { html+=md.renderer.renderInline([child],options,env); continue; }
+      const parts=reference(child.content,note,stack);
+      const before=parts.body && parts.standout && wrapped?'</p>':'';
+      const after=parts.body && wrapped?'<p>':'';
+      const separator=parts.body && wrapped && !parts.standout?'</p>':'';
+      html+=trustedToken(before+parts.title+separator+parts.body+after);
+    }
+    return html;
+  };
   // The editor treats isolated single underscores as underline, including _underline_.
   md.inline.ruler.before('emphasis','editor_underline',(state,silent)=>{
     const s=state.src,p=state.pos;
@@ -176,8 +196,13 @@ function render(note, stack=[note.label]) {
   const defaultImage=md.renderer.rules.image;
   md.renderer.rules.image=(tokens,i,options,env,self)=>{tokens[i].attrSet('src',assetUrl(tokens[i].attrGet('src')));return defaultImage(tokens,i,options,env,self);};
   // KaTeX output is trusted here; authored HTML is restricted before rendering.
-  const html=md.render(separateDisplayMath(note.body.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'')));
-  const clean=sanitizeHtml(html, {allowedTags:[...sanitizeHtml.defaults.allowedTags,'img','span','details','summary','section','div'],allowedAttributes:{...sanitizeHtml.defaults.allowedAttributes,a:['href','title','class'],img:['src','alt','width','height'],span:['class'],details:['open','class'],section:['class'],div:['class']},allowedSchemes:['http','https','mailto'],transformTags:{img:(tag,attrs)=>({tagName:'img',attribs:{...attrs,src:assetUrl(attrs.src)}})}});
+  const tokens=md.parse(separateDisplayMath(note.body.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'')),{});
+  tokens.forEach((token,i)=>{
+    if(token.type!=='inline' || tokens[i-1]?.type!=='paragraph_open') return;
+    token.children=[{type:'note_paragraph',meta:{children:token.children || [],wrapped:!tokens[i-1].hidden}}];
+  });
+  const html=md.renderer.render(tokens,md.options,{});
+  const clean=sanitizeHtml(html, {allowedTags:[...sanitizeHtml.defaults.allowedTags,'img','span','details','summary','section','div','button'],allowedAttributes:{...sanitizeHtml.defaults.allowedAttributes,a:['href','title','class','aria-label'],img:['src','alt','width','height'],span:['class'],details:['open','class'],section:['class'],div:['class','id'],button:['type','class','aria-expanded','aria-controls','data-outline-title']},allowedSchemes:['http','https','mailto'],transformTags:{img:(tag,attrs)=>({tagName:'img',attribs:{...attrs,src:assetUrl(attrs.src)}})}});
   return clean.replace(new RegExp(`${tokenPrefix}(\\d+)END`,'g'),(_,index)=>trustedTokens[Number(index)] ?? '');
 }
 function shell(title, contents, page='notes') {
@@ -195,7 +220,7 @@ for(const note of notes) {
   const hasTopic=tree.length>1;
   const topic=hasTopic?`<aside class="note-tree" aria-label="Nearby notes"><a class="back-link" href="index.html">← All notes</a><p class="side-label">Topic</p>${sidebar}</aside>`:'';
   const example=note.label.startsWith('showcase:')?'<p class="example-label">Example from Math Note Editor · Read-only</p>':'';
-  const contents=`<div class="note-layout${hasTopic?'':' reading-wide'}">${topic}<article class="note-paper">${hasTopic?'':'<a class="back-link" href="index.html">← All notes</a>'}<div class="note-kicker">${escape(note.label)}</div><h1>${renderTitle(note.title)}</h1>${example}<div class="note-content">${body}</div></article><aside class="note-context"><p class="side-label">In this note</p><div class="note-toc"></div><p class="side-label">References</p><div class="note-outgoing"></div><p class="side-label">Backlinks</p><div class="note-backlinks"></div></aside></div><script src="../notes.js" defer></script>`;
+  const contents=`<div class="note-layout${hasTopic?'':' reading-wide'}">${topic}<article class="note-paper">${hasTopic?'':'<a class="back-link" href="index.html">← All notes</a>'}<div class="note-block"><header class="note-block-header"><h1>${renderTitle(note.title)}</h1><span class="note-kicker">${escape(note.label)}</span></header><div class="note-content">${body}</div></div>${example}</article><aside class="note-context"><p class="side-label">In this note</p><div class="note-toc"></div><p class="side-label">References</p><div class="note-outgoing"></div><p class="side-label">Backlinks</p><div class="note-backlinks"></div></aside></div><script src="../notes.js" defer></script>`;
   fs.writeFileSync(path.join(output,urlFor(note)),shell(note.title,contents));
 }
 for(const note of notes) {

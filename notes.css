@@ -8,10 +8,10 @@
 .note-index-item:hover { background: var(--surface); color: var(--accent); }
 .note-index-item strong { font-weight: 500; font-size: 1.12rem; }
 .note-index-item[hidden] { display: none; }
-.note-layout { display: grid; grid-template-columns: minmax(150px,210px) minmax(0,1fr) minmax(145px,190px); gap: clamp(1.5rem,4vw,4rem); padding: 3rem 0 7rem; }
-.note-layout.reading-wide { grid-template-columns: minmax(0,1fr) minmax(165px,210px); max-width: 1050px; margin: 0 auto; }
+.note-layout { display: grid; grid-template-columns: minmax(140px,190px) minmax(0,1fr) minmax(145px,190px); gap: clamp(1.25rem,3vw,3rem); padding: 2rem 0 7rem; }
+.note-layout.reading-wide { grid-template-columns: minmax(0,1fr) minmax(165px,210px); max-width: 1120px; margin: 0 auto; }
 .note-tree,.note-context { align-self: start; position: sticky; top: 2rem; max-height: calc(100vh - 4rem); overflow-y: auto; font-size: .8rem; }
-.back-link { display: inline-block; margin-bottom: 3rem; color: var(--accent); text-decoration: none; }
+.back-link { display: inline-block; margin-bottom: 1.2rem; color: var(--accent); text-decoration: none; }
 .side-label { margin: 0 0 .7rem; }
 .tree-link,.note-context a { display: block; padding: .35rem 0; color: var(--muted); text-decoration: none; line-height: 1.4; overflow-wrap: anywhere; }
 .tree-link { padding-left: calc(var(--depth) * .65rem); border-left: 1px solid var(--line); }
@@ -29,36 +29,45 @@
 .outline-toggle:hover { color: var(--accent); }
 .side-empty { color: var(--faint); font-size: .8rem; }
 .note-paper { min-width: 0; }
-.note-paper h1 { font-size: clamp(2.4rem,3.7vw,3.8rem); line-height: 1.08; letter-spacing: -.045em; margin: .9rem 0 1.1rem; overflow-wrap: anywhere; }
+.note-block { background: #1a1d23; border: 1px solid #30363d; border-radius: 8px; overflow: hidden; box-shadow: 0 10px 32px rgba(0,0,0,.12); }
+.note-block-header { padding: .7rem 1rem .65rem; border-bottom: 1px solid #30363d; }
+.note-paper h1 { font: 700 1rem/1.4 Palatino, 'Palatino Linotype', 'Book Antiqua', 'PingFang SC', serif; letter-spacing: 0; margin: 0; overflow-wrap: anywhere; }
 .note-paper h1 .katex,.note-index-item .katex,.tree-link .katex,.note-context .katex { font-size: 1em; }
-.example-label { margin: 0 0 2rem; color: var(--faint); font-size: .8rem; }
-.note-content { border-top: 1px solid var(--line); padding-top: 2.6rem; color: #d8e3ef; font-size: 1.06rem; line-height: 1.85; overflow-wrap: anywhere; }
-.note-content h2 { color: var(--text); font-size: 1.65rem; font-weight: 500; margin: 2.7rem 0 .8rem; }
-.note-content h3 { color: var(--text); font-size: 1.24rem; margin: 2rem 0 .65rem; }
-.note-content p { margin: 0 0 1.35rem; }
-.note-content blockquote { border-left: 2px solid var(--accent); margin: 1.5rem 0; padding-left: 1.2rem; color: var(--muted); }
+.note-kicker { display: block; margin-top: .1rem; font-size: .66rem; letter-spacing: 0; text-transform: none; color: #8b949e; }
+.example-label { margin: .6rem 0 0; color: var(--faint); font-size: .72rem; }
+.note-content { padding: 1rem; color: #f0f2f5; font: 400 1rem/1.55 Palatino, 'Palatino Linotype', 'Book Antiqua', 'PingFang SC', serif; overflow-wrap: anywhere; }
+.note-content h1,.note-content h2,.note-content h3,.note-content h4,.note-content h5,.note-content h6 { color: #fff; font-weight: 700; letter-spacing: 0; line-height: 1.4; margin: .35rem 0 .15rem; }
+.note-content h1 { font-size: 1.55em; } .note-content h2 { font-size: 1.38em; } .note-content h3 { font-size: 1.22em; }
+.note-content h4 { font-size: 1.1em; } .note-content h5 { font-size: 1.02em; }
+.note-content p { margin: 0 0 .8rem; }
+.note-content p:empty { display: none; }
+.note-content ul,.note-content ol { margin: .3rem 0 .8rem; padding-left: 1.6rem; }
+.note-content li { margin: .12rem 0; }
+.note-content blockquote { border-left: 2px solid #4a90e2; margin: .6rem 0; padding-left: .8rem; color: #abb7c4; }
 .note-content a { color: #9ac8ff; text-underline-offset: .2em; }
 .note-content .standout { font-weight: 600; }
 .note-content pre { overflow-x: auto; padding: 1rem; background: var(--surface); border: 1px solid var(--line); line-height: 1.5; }
 .note-content code { font-size: .86em; }
 .note-content img { max-width: 100%; height: auto; }
-.note-content .katex { font-size: 1.08em; }
-.note-content .katex-display { overflow-x: auto; overflow-y: hidden; padding: .8rem 0; }
+.note-content .katex { font-size: 1.1em; }
+.note-content .katex-display { overflow-x: auto; overflow-y: hidden; padding: .25rem 0; margin: .2rem 0; font-size: 1.125em; }
 .note-underline { border-bottom: 1.5px solid currentColor; box-decoration-break: clone; }
-.note-embed { border: 1px solid var(--line); background: var(--surface); margin: 1.25rem 0; padding: 1rem 1.25rem; }
-.note-embed > summary { cursor: pointer; color: var(--text); font-weight: 600; list-style-position: inside; }
-.note-embed[open] > summary { padding-bottom: .75rem; margin-bottom: 1rem; border-bottom: 1px solid var(--line); }
-.note-embed .embed-content { padding-left: .3rem; }
-.note-embed .embed-open { display: inline-block; margin-top: 1rem; font-size: .78rem; }
-.standout-embed { border-left: 3px solid var(--accent); background: color-mix(in srgb, var(--surface) 80%, var(--bg)); }
-.standout-embed > summary { font-size: 1.25em; }
+.embed-title { background: none; border: 0; color: #a8b5c2; cursor: pointer; font-family: inherit; font-size: inherit; font-weight: 600; text-align: left; padding: 0; }
+.embed-title.inline-embed { display: inline; margin: 0 .2em; border-bottom: 2px dotted #a8b5c2; line-height: inherit; }
+.embed-title:hover { color: #e4edf7; }
+.embed-title:focus-visible { outline: 2px solid #4a90e2; outline-offset: 3px; }
+.note-embed { position: relative; min-width: 0; margin: .25rem 0 .55rem; border-left: 2px solid rgba(74,144,226,.35); background: rgba(255,255,255,.035); border-radius: 0 8px 8px 0; padding: .5rem .75rem .45rem 1rem; }
+.note-embed[hidden] { display: none; }
+.note-embed .embed-content > :last-child { margin-bottom: 0; }
+.note-embed .embed-open { display: inline-block; margin-top: .35rem; font: 400 .67rem/1.4 'DM Mono',monospace; color: #8b949e; text-decoration: none; }
+.standout-title-row { margin: .25rem 0 0; padding: .3rem .6rem; border-radius: 8px 8px 0 0; background: rgba(255,255,255,.06); }
+.embed-title.standout-embed { display: block; width: 100%; font-size: 1.5em; line-height: 1.3; }
+.embed-title.standout-embed::before { content: '⌄'; display: inline-block; width: 1em; margin-right: .35em; font-size: .7em; color: #8b949e; vertical-align: .1em; }
+.embed-title.standout-embed[aria-expanded="false"]::before { transform: rotate(-90deg); }
+.note-embed.standout-embed { margin-top: .2rem; padding: .55rem .75rem .65rem; background: rgba(255,255,255,.07); }
 .note-reference.standout { font-size: 1.17em; font-weight: 600; }
 .embed-cycle { color: var(--faint); font-size: .8em; }
-.embed-heading { display: flex; gap: .8rem; flex-wrap: wrap; align-items: baseline; border-bottom: 1px solid var(--line); padding-bottom: .7rem; margin-bottom: 1rem; font-size: .8rem; }
-.embed-heading span { color: var(--faint); text-transform: uppercase; font: .65rem 'DM Mono',monospace; letter-spacing: .1em; }
-.embed-content { font-size: .92em; }
-.embed-content > :last-child { margin-bottom: 0; }
-.inline-embed { margin: .7rem 0; }
+.embed-content { min-width: 0; }
 .broken-reference { text-decoration: underline wavy #ff9b87; text-underline-offset: .2em; }
 @media(max-width: 950px) { .note-layout,.note-layout.reading-wide { grid-template-columns: minmax(130px,180px) minmax(0,1fr); } .note-layout.reading-wide { display:block; max-width: 760px; } .note-context { display:none; } }
-@media(max-width: 650px) { .note-layout { display:block; padding-top: 2rem; } .note-tree { position:static; max-height:none; margin-bottom: 2rem; } .tree-link,.note-tree .side-label { display:none; } .back-link { margin:0; } .note-index-item { grid-template-columns: 1fr auto; gap:.35rem; } .note-index-item .note-label { grid-column:1/-1; } .note-paper h1 { margin-top:.55rem; } }
+@media(max-width: 650px) { .note-layout { display:block; padding-top: 2rem; } .note-tree { position:static; max-height:none; margin-bottom: 2rem; } .tree-link,.note-tree .side-label { display:none; } .back-link { margin:0 0 1rem; } .note-index-item { grid-template-columns: 1fr auto; gap:.35rem; } .note-index-item .note-label { grid-column:1/-1; } .note-content { padding: .85rem; } }

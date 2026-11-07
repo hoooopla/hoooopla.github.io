@@ -20,8 +20,8 @@ test('renders a workspace with math, references, embeds and assets', t => {
   assert.match(page,/class="katex/); assert.match(page,/assets\/graph.svg/);
   assert.match(page,/<h1>Sequences <span class="katex">/);
   assert.match(page,/<span class="note-underline">underlined<\/span>/);
-  assert.match(page,/<details class="note-embed standout-embed" open>/);
-  assert.match(page,/<summary data-outline-title="Convergence">/);
+  assert.match(page,/<button type="button" class="embed-title standout-embed" aria-expanded="true" aria-controls="embed-body-\d+" data-outline-title="Convergence">/);
+  assert.match(page,/<div class="note-embed standout-embed" id="embed-body-\d+">/);
   assert.match(page,/<h3>Embedded heading<\/h3>/);
   assert.equal((page.match(/class="katex-display"/g)||[]).length,2);
   assert.match(page,/style="top:-[\d.]+em/); // Superscripts in embedded math keep KaTeX positioning.
@@ -60,7 +60,8 @@ test('renders all eight notes created by Math Note Editor in a blank workspace',
   const welcome=page(1), nested=page(3), math=page(5), aliases=page(6);
   assert.match(welcome,/Welcome to <strong>Math Note Editor<\/strong>/);
   assert.match(welcome,/note-embed/);
-  assert.match(welcome,/<details class="note-embed standalone-embed" open>/);
+  assert.match(welcome,/<button type="button" class="embed-title inline-embed" aria-expanded="true"/);
+  assert.match(welcome,/<div class="note-embed inline-embed" id="embed-body-\d+">/);
   assert.match(welcome,/<span class="note-underline">underline<\/span>/);
   assert.match(welcome,/Example from Math Note Editor · Read-only/);
   assert.match(welcome,/This text belongs to a separate note/);
@@ -72,4 +73,17 @@ test('renders all eight notes created by Math Note Editor in a blank workspace',
   assert.match(math,/style="top:-[\d.]+em/);
   assert.match(math,/Backlinks/);
   assert.match(math,/Link and organize notes/);
+});
+test('renders inline sentence flow, recursive embeds, standout titles and nested math', t => {
+  const dir=make(); t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+  const output=path.join(dir,'output');
+  build(path.resolve('notes-workspace'),output);
+  const root=fs.readFileSync(path.join(output,'00000000-0000-4000-8000-000000000009.html'),'utf8');
+  assert.match(root,/stays in the sentence: <button[^>]+>A note inside a note<\/button><\/p><div class="note-embed inline-embed"/);
+  assert.match(root,/<\/div><p> and the sentence continues after its content\.<\/p>/);
+  assert.match(root,/<div class="standout-title-row"><button[^>]+>Write mathematics<\/button><\/div>/);
+  assert.match(root,/The relative label <button[^>]+>A deeper child<\/button><\/p><div class="note-embed inline-embed"/);
+  assert.match(root,/At this depth, math still renders: <span class="katex">/);
+  assert.match(root,/class="katex-display"/);
+  assert.doesNotMatch(root,/<p>\s*<div class="note-embed/);
 });
