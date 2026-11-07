@@ -1,0 +1,3 @@
+[submodule "vendor/math-note-editor"]
+	path = vendor/math-note-editor
+	url = https://github.com/hoooopla/Math-Note-Editor

@@ -87,3 +87,14 @@ test('renders inline sentence flow, recursive embeds, standout titles and nested
   assert.match(root,/class="katex-display"/);
   assert.doesNotMatch(root,/<p>\s*<div class="note-embed/);
 });
+test('uses the editor syntax for relative standout aliases and title math', t => {
+  const dir=make(); t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+  const source=path.join(dir,'workspace'), output=path.join(dir,'output'); fs.mkdirSync(source);
+  fs.writeFileSync(path.join(source,'root.md'),'---\nid: root\ntitle: Root\nlabel: topic/root\n---\n[[@/child || lower $x^2$∨]]\n');
+  fs.writeFileSync(path.join(source,'child.md'),'---\nid: child\ntitle: Child\nlabel: topic/root/child\n---\nNested text.\n');
+  build(source,output);
+  const html=fs.readFileSync(path.join(output,'root.html'),'utf8');
+  assert.match(html,/data-outline-title="Lower \$x\^2\$"/);
+  assert.match(html,/class="embed-title standout-embed"[^>]*>Lower <span class="katex">/);
+  assert.match(html,/Nested text\./);
+});

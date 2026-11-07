@@ -5,6 +5,8 @@ on:
     paths:
       - 'notes-workspace/**'
       - 'scripts/build-notes.mjs'
+      - 'vendor/math-note-editor'
+      - '.gitmodules'
       - 'notes.css'
       - 'notes.js'
       - 'package*.json'
@@ -19,6 +21,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: true
+          submodules: true
       - uses: actions/setup-node@v4
         with:
           node-version: '22'

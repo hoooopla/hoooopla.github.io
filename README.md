@@ -87,13 +87,17 @@ Content with $inline$ math, \[display math\], and [[other/label]].
 
 Open `[[other/label∨]]` references keep their inline title in the sentence and show the other note below it; click the title to collapse or reopen the content. `[[@label∨]]` uses the editor's larger standout title and body. Both kinds work recursively, including relative `[[/child∨]]` links; cycles stop at a link to the note. Aliases such as `[[label || display text]]` work too. Closed references navigate to their own note page. Note titles can contain `$math$`, and isolated `_underscores_` render as underlines. The reading outline includes headings and open embeds. Raw HTML is sanitized; local images must be under `assets/`. See the published `showcase:render-demo` example for nested inline, standout, and math rendering.
 
-To preview locally:
+Clone with the editor's shared reader and preview locally:
 
 ```sh
+git clone --recurse-submodules https://github.com/hoooopla/hoooopla.github.io
+cd hoooopla.github.io
 npm ci
 npm test
 npm run build:notes
 python3 -m http.server 8000
 ```
 
-Visit `http://localhost:8000/notes/`. The build reports broken references, duplicate labels, and missing assets. To make these errors fail the build, run `NOTES_STRICT=1 npm run build:notes`. Pushing to `main` triggers the GitHub Actions notes build, which commits generated `notes/` pages to the repository. GitHub Pages then serves them from the existing branch-based site.
+If you already cloned the site, run `git submodule update --init`. Visit `http://localhost:8000/notes/`. The build reports broken references, duplicate labels, and missing assets. To make these errors fail the build, run `NOTES_STRICT=1 npm run build:notes`. Pushing to `main` triggers the GitHub Actions notes build, which commits generated `notes/` pages to the repository. GitHub Pages then serves them from the existing branch-based site.
+
+The website imports the read-only renderer and syntax rules from its pinned `vendor/math-note-editor` submodule. The editor also imports those syntax rules, so changes to aliases, relative labels, title math, and embed structure belong in the editor repository. To adopt a new editor reader version, advance the submodule commit, run the tests and build, and commit its pointer. The website's `notes.css` owns its appearance: edit the `--reader-*` variables in `.note-block` for fonts, colours, spacing, indent, and standout size without changing embedded note semantics.
