@@ -85,7 +85,7 @@ label: analysis/sequences
 Content with $inline$ math, \[display math\], and [[other/label]].
 ```
 
-Open `[[other/label∨]]` references keep their inline title in the sentence and show the other note below it; click the title to collapse or reopen the content. `[[@label∨]]` uses the editor's larger standout title and body. Both kinds work recursively, including relative `[[/child∨]]` links; cycles stop at a link to the note. Aliases such as `[[label || display text]]` work too. Closed references navigate to their own note page. Note titles can contain `$math$`, and isolated `_underscores_` render as underlines. The reading outline includes headings and open embeds. Raw HTML is sanitized; local images must be under `assets/`. See the published `showcase:render-demo` example for nested inline, standout, and math rendering.
+`[[other/label∨]]` starts expanded; `[[other/label]]` starts collapsed. Click either title to toggle the embedded note in place. `[[@label]]` uses the editor's larger standout title. Both styles work recursively, including relative `[[/child]]` links; cycles stop at a link to the note. Aliases such as `[[label || display text]]` work too. Each expanded block also has an “Open note ↗” link to its own page. Note titles can contain `$math$`, and isolated `_underscores_` render as underlines. The reading outline includes headings and visible embeds. Raw HTML is sanitized; local images must be under `assets/`. See the published `showcase:render-demo` example for nested inline, standout, and math rendering.
 
 Clone with the editor's shared reader and preview locally:
 

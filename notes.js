@@ -5,12 +5,14 @@ search?.addEventListener('input', () => {
 });
 const toc = document.querySelector('.note-toc');
 const content = document.querySelector('.note-content');
+let refreshOutline = () => {};
 for (const title of document.querySelectorAll('.embed-title[aria-controls]')) {
   title.addEventListener('click', () => {
     const body = document.getElementById(title.getAttribute('aria-controls'));
     const expanded = title.getAttribute('aria-expanded') === 'true';
     title.setAttribute('aria-expanded', String(!expanded));
     if (body) body.hidden = expanded;
+    refreshOutline();
   });
 }
 if (toc && content) {
@@ -72,6 +74,7 @@ if (toc && content) {
         content.querySelector(`[aria-controls="${ancestor.id}"]`)?.setAttribute('aria-expanded','true');
         ancestor = ancestor.parentElement.closest('.note-embed');
       }
+      updateVisibility();
     });
     row.append(link);
     toc.append(row);
@@ -81,9 +84,11 @@ if (toc && content) {
     const ancestors = [];
     entries.forEach((entry, index) => {
       while (ancestors.length && entries[ancestors.at(-1)].depth >= entry.depth) ancestors.pop();
-      items[index].hidden = ancestors.some(parent => collapsed.has(parent));
+      items[index].hidden = ancestors.some(parent => collapsed.has(parent)) || !!entry.target.closest('.note-embed[hidden]');
       ancestors.push(index);
     });
   }
+  refreshOutline = updateVisibility;
+  updateVisibility();
   if (!entries.length) toc.textContent = 'No sections';
 }

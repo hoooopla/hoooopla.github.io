@@ -65,9 +65,10 @@ test('renders all eight notes created by Math Note Editor in a blank workspace',
   assert.match(welcome,/<span class="note-underline">underline<\/span>/);
   assert.match(welcome,/Example from Math Note Editor · Read-only/);
   assert.match(welcome,/This text belongs to a separate note/);
-  assert.match(welcome,/href="00000000-0000-4000-8000-000000000005.html">Math<\/a>/);
-  assert.match(nested,/href="00000000-0000-4000-8000-000000000004.html">A child note<\/a>/);
-  assert.match(aliases,/href="00000000-0000-4000-8000-000000000005.html">these formulas<\/a>/);
+  assert.match(welcome,/<button type="button" class="embed-title inline-embed" aria-expanded="false"[^>]*>Math<\/button><\/p><div class="note-embed inline-embed"[^>]* hidden>/);
+  assert.match(nested,/<button type="button" class="embed-title inline-embed" aria-expanded="false"[^>]*>A child note<\/button>/);
+  assert.match(aliases,/<button type="button" class="embed-title inline-embed" aria-expanded="false"[^>]*>these formulas<\/button>/);
+  assert.match(welcome,/href="00000000-0000-4000-8000-000000000005.html" aria-label="Open Write mathematics as a note"/);
   assert.match(math,/class="katex/);
   assert.match(math,/class="katex-display/);
   assert.match(math,/style="top:-[\d.]+em/);
