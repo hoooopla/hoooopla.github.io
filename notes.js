@@ -6,10 +6,34 @@ search?.addEventListener('input', () => {
 const toc = document.querySelector('.note-toc');
 const content = document.querySelector('.note-content');
 let refreshOutline = () => {};
+const inlineParagraph = title => title.classList.contains('inline-embed') ? title.closest('p') : null;
+function joinContinuation(title, body) {
+  const paragraph = inlineParagraph(title);
+  const continuation = body?.nextElementSibling;
+  if (!paragraph || continuation?.tagName !== 'P' || continuation.parentElement !== paragraph.parentElement) return;
+  while (continuation.firstChild) paragraph.append(continuation.firstChild);
+  continuation.remove();
+}
+function splitContinuation(title, body) {
+  const paragraph = inlineParagraph(title);
+  if (!paragraph || body.parentElement !== paragraph.parentElement) return;
+  const continuation = document.createElement('p');
+  while (title.nextSibling) continuation.append(title.nextSibling);
+  body.after(continuation);
+}
+// The static reader keeps each embedded body outside its paragraph. Join the
+// sentence fragments of closed references, then split them only when opened.
+for (const title of document.querySelectorAll('.embed-title.inline-embed[aria-expanded="false"]')) {
+  joinContinuation(title, document.getElementById(title.getAttribute('aria-controls')));
+}
 for (const title of document.querySelectorAll('.embed-title[aria-controls]')) {
   title.addEventListener('click', () => {
     const body = document.getElementById(title.getAttribute('aria-controls'));
     const expanded = title.getAttribute('aria-expanded') === 'true';
+    if (body) {
+      if (expanded) joinContinuation(title, body);
+      else splitContinuation(title, body);
+    }
     title.setAttribute('aria-expanded', String(!expanded));
     if (body) body.hidden = expanded;
     refreshOutline();
