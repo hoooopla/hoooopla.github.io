@@ -39,7 +39,11 @@ for (const file of paths.sort()) {
   if (byLabel.has(note.label)) errors.push(`${path.relative(source,file)}: duplicate label ${note.label}`);
   notes.push(note); byLabel.set(note.label,note);
 }
-const {render, renderTitle, refs, outgoing} = createNoteReader({source, notes, byLabel, errors});
+// Reuse the editor's reader, but give referenced notes empty bodies. Each page
+// and fragment renders one note deep; the browser fetches a target on opening.
+const shallowNotes = notes.map(note => ({...note, body:''}));
+const shallowByLabel = new Map(shallowNotes.map(note => [note.label,note]));
+const {render, renderTitle, refs, outgoing} = createNoteReader({source, notes:shallowNotes, byLabel:shallowByLabel, errors});
 function shell(title, contents, page='notes') {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>${escape(title)} — hoooopla</title><link rel="icon" href="../favicon.svg"><link rel="stylesheet" href="../style.css"><link rel="stylesheet" href="../notes.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.25/dist/katex.min.css"></head><body data-page="${page}"><a class="skip-link" href="#content">Skip to content</a><header class="site-header"><a class="site-mark" href="../index.html"><span>H</span><small>Mathematics</small></a><nav class="site-nav" aria-label="Main navigation"><a href="../index.html">About</a><a href="../files.html">Files</a><a href="index.html" aria-current="page">Notes</a><a href="../blog.html">Blog</a><a href="https://hoooopla.github.io/Math-Note-Editor/">Editor ↗</a></nav></header><main id="content">${contents}</main><footer class="site-footer"><span>© ${new Date().getFullYear()} hoooopla</span><span>Mathematical notes, connected by ideas.</span></footer></body></html>`;
 }
@@ -49,13 +53,14 @@ const assetFolder=path.join(source,'assets');if(fs.existsSync(assetFolder))fs.cp
 fs.writeFileSync(path.join(output,'index.html'),shell('Notes',outputIndex));
 for(const note of notes) {
   const body=render(note);
+  fs.writeFileSync(path.join(output,`${slug(note.id)}.fragment.html`),body);
   const ancestors=note.label.split('/').slice(0,-1).map((_,i)=>note.label.split('/').slice(0,i+1).join('/'));
   const tree=notes.filter(n=>n.label===note.label || n.label.startsWith(note.label+'/') || ancestors.includes(n.label));
   const sidebar=tree.sort((a,b)=>a.label.localeCompare(b.label)).map(n=>`<a class="tree-link ${n.id===note.id?'selected':''}" style="--depth:${Math.max(0,n.label.split('/').length-1)}" href="${urlFor(n)}">${renderTitle(n.title)}</a>`).join('');
   const hasTopic=tree.length>1;
   const topic=hasTopic?`<aside class="note-tree" aria-label="Nearby notes"><a class="back-link" href="index.html">← All notes</a><p class="side-label">Topic</p>${sidebar}</aside>`:'';
   const example=note.label.startsWith('showcase:')?'<p class="example-label">Example from Math Note Editor · Read-only</p>':'';
-  const contents=`<div class="note-layout${hasTopic?'':' reading-wide'}">${topic}<article class="note-paper">${hasTopic?'':'<a class="back-link" href="index.html">← All notes</a>'}<div class="note-block"><header class="note-block-header"><h1>${renderTitle(note.title)}</h1><span class="note-kicker">${escape(note.label)}</span></header><div class="note-content">${body}</div></div>${example}</article><aside class="note-context"><p class="side-label">In this note</p><div class="note-toc"></div><p class="side-label">References</p><div class="note-outgoing"></div><p class="side-label">Backlinks</p><div class="note-backlinks"></div></aside></div><script src="../notes.js" defer></script>`;
+  const contents=`<div class="note-layout${hasTopic?'':' reading-wide'}">${topic}<article class="note-paper">${hasTopic?'':'<a class="back-link" href="index.html">← All notes</a>'}<div class="note-block"><header class="note-block-header"><h1>${renderTitle(note.title)}</h1><span class="note-kicker">${escape(note.label)}</span></header><div class="note-content" data-note-id="${escape(note.id)}">${body}</div></div>${example}</article><aside class="note-context"><p class="side-label">In this note</p><div class="note-toc"></div><p class="side-label">References</p><div class="note-outgoing"></div><p class="side-label">Backlinks</p><div class="note-backlinks"></div></aside></div><script src="../notes.js" defer></script>`;
   fs.writeFileSync(path.join(output,urlFor(note)),shell(note.title,contents));
 }
 for(const note of notes) {

@@ -56,7 +56,9 @@
 .note-content p:empty { display: none; }
 .note-content ul,.note-content ol { margin: .3rem 0 .8rem; padding-left: 1.6rem; }
 .note-content li { margin: .12rem 0; }
-.note-content blockquote { border-left: 2px solid var(--reader-accent); margin: .6rem 0; padding-left: .8rem; color: #abb7c4; }
+.note-content blockquote { border: 0; margin: 0 0 .8rem; padding: 0; color: #cbf0ff; font-weight: 700; }
+.note-content blockquote p { margin: 0; white-space: pre-line; }
+.note-content blockquote .katex { font-weight: 400; }
 .note-content a { color: #9ac8ff; text-underline-offset: .2em; }
 .note-content .standout { font-weight: 600; }
 .note-content pre { overflow-x: auto; padding: 1rem; background: var(--surface); border: 1px solid var(--line); line-height: 1.5; }

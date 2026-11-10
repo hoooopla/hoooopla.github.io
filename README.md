@@ -87,6 +87,8 @@ Content with $inline$ math, \[display math\], and [[other/label]].
 
 `[[other/label∨]]` starts expanded; `[[other/label]]` starts collapsed. Click either title to toggle the embedded note in place. `[[@label]]` uses the editor's larger standout title. Both styles work recursively, including relative `[[/child]]` links; cycles stop at a link to the note. Aliases such as `[[label || display text]]` work too. Each expanded block also has an “Open note ↗” link to its own page. Note titles can contain `$math$`, and isolated `_underscores_` render as underlines. The reading outline includes headings and visible embeds. Raw HTML is sanitized; local images must be under `assets/`. See the published `showcase:render-demo` example for nested inline, standout, and math rendering.
 
+Each note page contains its own text and embed titles. An initially open embed fetches its note when the page loads; a closed one fetches on first expansion. Repeated references reuse the downloaded fragment, and nested notes load one level at a time. Generated `notes/*.fragment.html` files must be published alongside the pages. The `showcase:render-cases` example covers math, quotes (`> `), inline and standout references, initial open/closed states, nesting, and cycles. The website styles editor quotes as highlighted text instead of a bordered block.
+
 Clone with the editor's shared reader and preview locally:
 
 ```sh
